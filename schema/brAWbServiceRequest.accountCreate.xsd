@@ -45,7 +45,13 @@
                     </xsd:complexType>
                 </xsd:element>
             </xsd:sequence>
-            <xsd:attribute name="Id" use="required" type="T_Hash"/>
+            <xsd:attribute name="Id" use="required" type="T_Hash">
+                <xsd:annotation>
+                    <xsd:documentation xml:lang="ptbr">
+                        ID é calculado com o hash md5 da assinatura.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:attribute>
             <xsd:attribute name="version" use="required" type="T_Version"/>
         </xsd:complexType>
     </xsd:element>

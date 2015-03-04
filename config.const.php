@@ -17,9 +17,9 @@
  * License along with this library.
  */
 
-// Carrega o arquivo de configuração das contantes.
-require_once(dirname(__FILE__).'/config.const.php');
+// Define o algoritmo de hash padrão. (Padrão: sha512)
+// Aqui pode ser qualquer valor encontrado em: http://php.net/manual/en/function.hash-algos.php
+// - APIKEY, HASH de requsição. Etc...
+DEFINE('BRAWB_HASH_ALGO', 'sha512', false);
 
-header('Content-Type: application/json; charset=utf-8');
-echo '{"serviceResponse":{"responseHash":null,"responseMessage":"Your API Key is missing. Please, check your request"}}';
 ?>

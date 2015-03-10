@@ -17,12 +17,13 @@
  * License along with this library.
  */
 
-// Carrega o arquivo de configuraÃ§Ã£o das contantes.
-require_once(dirname(__FILE__).'/autoloader.php');
-
-$bra = new brAWbServer\brAWbServer();
-$bra->get('/', function() {
-    echo "Hello brAthena!!!";
-});
-$bra->run();
+namespace brAWbServer
+{
+    /**
+     * Classe padrão para as configurações do serviço do webservice.
+     */
+    class brAWbServerException extends \Exception
+    {
+    }
+}
 ?>

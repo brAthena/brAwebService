@@ -17,12 +17,25 @@
  * License along with this library.
  */
 
-// Carrega o arquivo de configuração das contantes.
-require_once(dirname(__FILE__).'/autoloader.php');
+require_once(dirname(__FILE__).'/Slim/Slim.php');
 
-$bra = new brAWbServer\brAWbServer();
-$bra->get('/', function() {
-    echo "Hello brAthena!!!";
-});
-$bra->run();
+// Registra o autoload para o Slim Framework.
+// \Slim\Slim::registerAutoloader();
+
+try
+{
+    spl_autoload_register(function($class) {
+        $class_path = str_replace('\\', '/', dirname(__FILE__).'/'.$class.'.php');
+        
+        if(is_file($class_path) && file_exists($class_path))
+        {
+            require_once($class_path);
+        }
+    }, true);
+}
+catch(Exception $ex)
+{
+    echo $ex->getMessage();
+    exit;
+}
 ?>

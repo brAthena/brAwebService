@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<brAWbServerConfig>
+    <PdoServerConnection user="root" pass="rootw1e2r3a4" connectionString="mysql:host=localhost;dbname=test;"/>
+    <PdoRagnaConnection user="root" pass="root" connectionString="mysql:host=localhost;dbname=test;"/>
+</brAWbServerConfig>

@@ -65,9 +65,6 @@ namespace brAWbServer
             // Tirei como base: https://gist.github.com/RodolfoSilva/1f438da56cb55c1eaea0 [carloshlfz, 10/03/2015]
             $this->hook('slim.before.router', function() use ($app)
             {
-                // Configurações para carregar a conexão com o servidor. Verificações de chaves.
-                $xmlPdo = $app->simpleXmlHnd->PdoServerConnection->{'@attributes'};
-                
                 // Token de acesso ao sistema.
                 $token = $app->request()->get('token');
 
@@ -93,7 +90,7 @@ namespace brAWbServer
          */
         public function getPdoServer()
         {
-            $xmlPdo = $app->simpleXmlHnd->PdoServerConnection->{'@attributes'};
+            $xmlPdo = $this->simpleXmlHnd->PdoServerConnection->{'@attributes'};
             return new \PDO($xmlPdo->connectionString, $xmlPdo->user, $xmlPdo->pass);
         }
         
@@ -103,7 +100,7 @@ namespace brAWbServer
          */
         public function getPdoRagna()
         {
-            $xmlPdo = $app->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
+            $xmlPdo = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
             return new \PDO($xmlPdo->connectionString, $xmlPdo->user, $xmlPdo->pass); 
         }
     } // fim - class brAWbServer extends \Slim\Slim

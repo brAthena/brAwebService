@@ -20,24 +20,24 @@
 namespace brAWbServer
 {
     /**
-     * Classe padrão para as configurações do serviço do webservice.
+     * Classe padrÃ£o para as configuraÃ§Ãµes do serviÃ§o do webservice.
      */
     class brAWbServer extends \Slim\Slim
     {
         /**
-         * Gancho para leitura do arquivo de configuração do sistema.
+         * Gancho para leitura do arquivo de configuraÃ§Ã£o do sistema.
          * @var \SimpleXMLElement
          */
         public $simpleXmlHnd;
 
         /**
-         * Gancho com a conexão sql do server do webservice.
+         * Gancho com a conexÃ£o sql do server do webservice.
          * @var \PDO
          */
         public $pdoServer;
 
         /**
-         * Gancho com a conexão sql do servidor do ragnarok.
+         * Gancho com a conexÃ£o sql do servidor do ragnarok.
          * @var \PDO
          */
         public $pdoRagna;
@@ -45,48 +45,67 @@ namespace brAWbServer
         /**
          * Construtor para o objeto do servidor.
          *
-         * @param array $userSettings Configurações do framework para execução.
+         * @param array $userSettings ConfiguraÃ§Ãµes do framework para execuÃ§Ã£o.
          */
         public function __construct()
         {
-            // Carrega o xml de configuração do sistema. Adicionado isso pois não estava conseguindo realizar a leitura
+            // Carrega o xml de configuraÃ§Ã£o do sistema. Adicionado isso pois nÃ£o estava conseguindo realizar a leitura
             // dos atributos corretamente.
             $this->simpleXmlHnd = json_decode(json_encode(\simplexml_load_file (dirname(__FILE__).'/../config.xml')));
             
-            // Configurações padrões para a execução da aplicação.
+            // ConfiguraÃ§Ãµes padrÃµes para a execuÃ§Ã£o da aplicaÃ§Ã£o.
             parent::__construct(array(
                 'log.writer' => new \Slim\LogWriter(fopen(dirname(__FILE__).'/../Logs/brAWbServer.log', 'a+')) // logs
             ));
             
-            // Iguala para poder usar dentro das funções. $this nao pode ser enviado.
+            // Iguala para poder usar dentro das funÃ§Ãµes. $this nao pode ser enviado.
             $app = $this;
             
-            // Executa as operações para verificação do token de acesso ao banco de dados.
+            // Executa as operaÃ§Ãµes para verificaÃ§Ã£o do token de acesso ao banco de dados.
             // Tirei como base: https://gist.github.com/RodolfoSilva/1f438da56cb55c1eaea0 [carloshlfz, 10/03/2015]
-            $this->hook('slim.before.router', function() use ($app) {
-                // Obtém informações sobre a requisição do slim.
-                $appReq = $app->request();
-                // Configurações para carregar a conexão com o servidor. Verificações de chaves.
+            $this->hook('slim.before.router', function() use ($app)
+            {
+                // ConfiguraÃ§Ãµes para carregar a conexÃ£o com o servidor. VerificaÃ§Ãµes de chaves.
                 $xmlPdo = $app->simpleXmlHnd->PdoServerConnection->{'@attributes'};
                 
                 // Token de acesso ao sistema.
                 $token = $app->request()->get('token');
 
-                // Se token não foi enviado para a aplicação.
+                // Se token nÃ£o foi enviado para a aplicaÃ§Ã£o.
                 if(is_null($token) === true)
                 {
-                    throw new brAWbServerException('Acesso negado. Token de acesso não fornecido.');
+                    throw new brAWbServerException('Acesso negado. Token de acesso nÃ£o fornecido.');
                 }
                 
-                // Abre a conexão de dados com o servidor.
-                $app->pdoServer = new \PDO($xmlPdo->connectionString, $xmlPdo->user, $xmlPdo->pass);
+                // Abre a conexÃ£o de dados com o servidor.
+                $app->pdoServer = $app->getPdoServer();
 
-                // @todo: Verificação do token de acesso.
+                // @todo: VerificaÃ§Ã£o do token de acesso.
 
-                // Encerra a conexão de dados com o servidor.
+                // Encerra a conexÃ£o de dados com o servidor.
                 $app->pdoServer = null;
             });
         } // fim - public function __construct()
+        
+        /**
+         * ObtÃ©m a conexÃ£o com o banco de dados do servidor de serviÃ§o.
+         * @return \PDO
+         */
+        public function getPdoServer()
+        {
+            $xmlPdo = $app->simpleXmlHnd->PdoServerConnection->{'@attributes'};
+            return new \PDO($xmlPdo->connectionString, $xmlPdo->user, $xmlPdo->pass);
+        }
+        
+        /**
+         * ObtÃ©m a conexÃ£o com o banco de dados do servidor de ragnarok.
+         * @return \PDO
+         */
+        public function getPdoRagna()
+        {
+            $xmlPdo = $app->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
+            return new \PDO($xmlPdo->connectionString, $xmlPdo->user, $xmlPdo->pass); 
+        }
     } // fim - class brAWbServer extends \Slim\Slim
 } // fim - namespace brAWbServer
 ?>

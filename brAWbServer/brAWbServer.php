@@ -61,47 +61,47 @@ namespace brAWbServer
             // Iguala para poder usar dentro das funções. $this nao pode ser enviado.
             $app = $this;
             
-            // Executa as operações para verificação do token de acesso ao banco de dados.
+            // Executa as operações para verificação do apiKey ao banco de dados.
             // Tirei como base: https://gist.github.com/RodolfoSilva/1f438da56cb55c1eaea0 [carloshlfz, 10/03/2015]
-            $this->hook('slim.before.router', function() use ($app)
-            {
-                // Token de acesso ao sistema.
-                $token = $app->request()->get('token');
+            $this->hook('slim.before.router', function() use ($app) {
+                // ApiKey de acesso ao sistema.
+                $apiKey = $app->request()->get('apiKey');
 
                 // Se token não foi enviado para a aplicação.
-                if(is_null($token) === true)
+                if(is_null($apiKey) === true)
                 {
-                    throw new brAWbServerException('Acesso negado. Token de acesso não fornecido.');
+                    throw new brAWbServerException('Acesso negado. ApiKey de acesso não fornecido.');
                 }
-                
-                // Abre a conexão de dados com o servidor.
-                $app->pdoServer = $app->getPdoServer();
-
-                // @todo: Verificação do token de acesso.
-
-                // Encerra a conexão de dados com o servidor.
-                $app->pdoServer = null;
+                else if($app->checkApiKey($apiKey) === false)
+                { // ApiKey inválido.
+                    throw new brAWbServerException('Acesso negado. ApiKey inválida! Verifique por favor.');
+                }
             });
         } // fim - public function __construct()
         
         /**
-         * Obtém a conexão com o banco de dados do servidor de serviço.
-         * @return \PDO
+         * Verifica se o apikey solicitado é valido. E atualiza a contagem do ApiKey.
+         *
+         * @param string $apiKey
+         *
+         * @return boolean
          */
-        public function getPdoServer()
+        public function checkApiKey($apiKey)
         {
-            $xmlPdo = $this->simpleXmlHnd->PdoServerConnection->{'@attributes'};
-            return new \PDO($xmlPdo->connectionString, $xmlPdo->user, $xmlPdo->pass);
-        }
-        
-        /**
-         * Obtém a conexão com o banco de dados do servidor de ragnarok.
-         * @return \PDO
-         */
-        public function getPdoRagna()
-        {
-            $xmlPdo = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
-            return new \PDO($xmlPdo->connectionString, $xmlPdo->user, $xmlPdo->pass); 
+            $bExists = false;
+            
+            $this->pdoServer = new \PDO($this->simpleXmlHnd->PdoServerConnection->{'@attributes'}->connectionString,
+                NULL, NULL, array(
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+                ));
+            $stmt = $this->pdoServer->prepare('UPDATE brawbkeys SET ApiUsedCount = ApiUsedCount + 1 WHERE ApiKey = :ApiKey AND ApiUsedCount < ApiLimitCount AND date() <= ApiExpires');
+            $stmt->execute(array(
+                ':ApiKey' => $apiKey
+            ));
+            $bExists = ($stmt->rowCount() > 0);
+            $this->pdoServer = null;
+
+            return $bExists;
         }
     } // fim - class brAWbServer extends \Slim\Slim
 } // fim - namespace brAWbServer

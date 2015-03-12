@@ -150,7 +150,17 @@ namespace brAWbServer
                 NULL, NULL, array(
                     \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
                 ));
-            $stmt = $this->pdoServer->prepare('UPDATE brawbkeys SET ApiUsedCount = ApiUsedCount + 1 WHERE ApiKey = :ApiKey AND ApiUsedCount < ApiLimitCount AND date() <= ApiExpires');
+            $stmt = $this->pdoServer->prepare('
+                UPDATE
+                    brawbkeys
+                SET
+                    ApiUsedCount = ApiUsedCount + 1
+                WHERE
+                    ApiKey = :ApiKey
+                        AND
+                    (ApiUnlimitedCount = true
+                        or (ApiUsedCount < ApiLimitCount AND date() <= ApiExpires))
+            ');
             $stmt->execute(array(
                 ':ApiKey' => $apiKey
             ));

@@ -6,5 +6,6 @@ CREATE TABLE brawbkeys (
     ApiAllowed BOOLEAN NOT NULL DEFAULT true,
     ApiExpires DATE,
     ApiUsedCount INTEGER DEFAULT (0) NOT NULL,
-    ApiLimitCount INTEGER DEFAULT (5000) NOT NULL
+    ApiLimitCount INTEGER DEFAULT (5000) NOT NULL,
+    ApiUnlimitedCount BOOLEAN NOT NULL DEFAULT false
 );

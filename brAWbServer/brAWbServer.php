@@ -58,6 +58,8 @@ namespace brAWbServer
                 'log.writer' => new \Slim\LogWriter(fopen(dirname(__FILE__).'/../Logs/brAWbServer.log', 'a+')) // logs
             ));
             
+            $this->add(new \Slim\Middleware\ContentTypes());
+            
             // Iguala para poder usar dentro das funções. $this nao pode ser enviado.
             $app = $this;
             
@@ -77,7 +79,61 @@ namespace brAWbServer
                     throw new brAWbServerException('Acesso negado. ApiKey inválida! Verifique por favor.');
                 }
             });
+
+            // Adiciona o método para put de crição de contas.
+            $this->put('/account/', function() use ($app) {
+                // Obtém os dados da requisição do put.
+                $username = $app->request()->put('username');
+                $userpass = $app->request()->put('userpass');
+                $sex = $app->request()->put('sex');
+                $email = $app->request()->put('email');
+                
+                // Verifica se algum dado foi retornado de forma incorreta.
+                if(is_null($username) or is_null($username) or is_null($sex) or is_null($email))
+                {
+                    throw new brAWbServer\brAWbServerException('Nem todos os parametros para criação de conta foram recebidos.');
+                }
+                // Testa se a conta foi criada com sucesso.
+                else if(($obj = $app->createAccount($username, $userpass, $sex, $email)) === false)
+                {
+                    throw new brAWbServer\brAWbServerException('Não foi possivel criar o nome de usuário. Verifique os parametros enviados.');
+                }
+
+                echo json_encode($obj);
+            });
+
         } // fim - public function __construct()
+        
+        /**
+         * Cria uma conta no banco de dados e retorna o objeto com os dados de criação.
+         *
+         * @param string $username Nome de usuário. [Padrão: ^([a-z0-9]{4,24})$]
+         * @param string $userpass Senha de usuário. [Padrão: ^([a-f0-9]{32})$]
+         * @param string $sex Senha da conta a ser criada. [Padrão: ^(M|F)$]
+         * @param string $email Email para a conta a ser criada. [Padrão: ^([^@]+)@([^\.]+)\..+$]
+         *
+         * @return \stdClass Classe retornando os dados de criação da conta.
+         */
+        public function createAccount($username, $userpass, $sex, $email)
+        {
+            // Obtém as validações regex para este método.
+            $createAccountValidation = $this->simpleXmlHnd->createAccountValidation;
+
+            // Verifica se todos os dados recebidos estão dentro dos regex.
+            if(!preg_match("/{$createAccountValidation->username}/i", $username))
+                throw new brAWbServerException('Nome de usuário em formato inválido!');
+            else if(!preg_match("/{$createAccountValidation->userpass}/i", $userpass))
+                throw new brAWbServerException('Senha de usuário em formato inválido!');
+            else if(!preg_match("/{$createAccountValidation->sex}/i", $sex))
+                throw new brAWbServerException('Sexo para conta inválido! Aceitos: M ou F');
+            else if(!preg_match("/{$createAccountValidation->email}/i", $email))
+                throw new brAWbServerException('Email de usuário em formato inválido');
+
+            // @todo: Criação da conta.
+            return (object)array(
+                'account_id' => -1
+            );
+        }
         
         /**
          * Verifica se o apikey solicitado é valido. E atualiza a contagem do ApiKey.

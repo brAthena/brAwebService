@@ -2,4 +2,10 @@
 <brAWbServerConfig>
     <PdoServerConnection user="" pass="" connectionString="sqlite:brawbservice.db"/>
     <PdoRagnaConnection user="root" pass="root" connectionString="mysql:host=localhost;dbname=test;"/>
+    <createAccountValidation type="regex">
+        <username>^([a-z0-9]{4,24})$</username>
+        <userpass>^([a-f0-9]{32})$</userpass>
+        <sex>^(M|F)$</sex>
+        <email>^([^@]+)@([^\.]+)\..+$</email>
+    </createAccountValidation>
 </brAWbServerConfig>

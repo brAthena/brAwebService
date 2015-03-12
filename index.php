@@ -21,8 +21,5 @@
 require_once(dirname(__FILE__).'/autoloader.php');
 
 $bra = new brAWbServer\brAWbServer();
-$bra->get('/', function() {
-    echo "Hello brAthena!!!";
-});
 $bra->run();
 ?>

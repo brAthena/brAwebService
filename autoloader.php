@@ -1,6 +1,6 @@
 <?php
 /**
- * brAWbService
+ * brAWebService
  * Copyright (c) brAthena, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or

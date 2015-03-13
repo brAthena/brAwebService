@@ -1,6 +1,6 @@
 <?php
 /**
- * brAWbService
+ * brAWebService
  * Copyright (c) brAthena, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,12 +17,12 @@
  * License along with this library.
  */
 
-namespace brAWbServer
+namespace brAWebServer
 {
     /**
      * Classe padrão para as configurações do serviço do webservice.
      */
-    class brAWbServer extends \Slim\Slim
+    class brAWebServer extends \Slim\Slim
     {
         /**
          * Gancho para leitura do arquivo de configuração do sistema.
@@ -55,7 +55,7 @@ namespace brAWbServer
             
             // Configurações padrões para a execução da aplicação.
             parent::__construct(array(
-                'log.writer' => new \Slim\LogWriter(fopen(dirname(__FILE__).'/../Logs/brAWbServer.log', 'a+')) // logs
+                'log.writer' => new \Slim\LogWriter(fopen(dirname(__FILE__).'/../Logs/brAWebServer.log', 'a+')) // logs
             ));
             
             $this->add(new \Slim\Middleware\ContentTypes());
@@ -72,11 +72,11 @@ namespace brAWbServer
                 // Se token não foi enviado para a aplicação.
                 if(is_null($apiKey) === true)
                 {
-                    throw new brAWbServerException('Acesso negado. ApiKey de acesso não fornecido.');
+                    throw new brAWebServerException('Acesso negado. ApiKey de acesso não fornecido.');
                 }
                 else if($app->checkApiKey($apiKey) === false)
                 { // ApiKey inválido.
-                    throw new brAWbServerException('Acesso negado. ApiKey inválida! Verifique por favor.');
+                    throw new brAWebServerException('Acesso negado. ApiKey inválida! Verifique por favor.');
                 }
             });
 
@@ -91,12 +91,12 @@ namespace brAWbServer
                 // Verifica se algum dado foi retornado de forma incorreta.
                 if(is_null($username) or is_null($username) or is_null($sex) or is_null($email))
                 {
-                    throw new brAWbServer\brAWbServerException('Nem todos os parametros para criação de conta foram recebidos.');
+                    throw new brAWebServer\brAWebServerException('Nem todos os parametros para criação de conta foram recebidos.');
                 }
                 // Testa se a conta foi criada com sucesso.
                 else if(($obj = $app->createAccount($username, $userpass, $sex, $email)) === false)
                 {
-                    throw new brAWbServer\brAWbServerException('Não foi possivel criar o nome de usuário. Verifique os parametros enviados.');
+                    throw new brAWebServer\brAWebServerException('Não foi possivel criar o nome de usuário. Verifique os parametros enviados.');
                 }
 
                 echo json_encode($obj);
@@ -121,13 +121,13 @@ namespace brAWbServer
 
             // Verifica se todos os dados recebidos estão dentro dos regex.
             if(!preg_match("/{$createAccountValidation->username}/i", $username))
-                throw new brAWbServerException('Nome de usuário em formato inválido!');
+                throw new brAWebServerException('Nome de usuário em formato inválido!');
             else if(!preg_match("/{$createAccountValidation->userpass}/i", $userpass))
-                throw new brAWbServerException('Senha de usuário em formato inválido!');
+                throw new brAWebServerException('Senha de usuário em formato inválido!');
             else if(!preg_match("/{$createAccountValidation->sex}/i", $sex))
-                throw new brAWbServerException('Sexo para conta inválido! Aceitos: M ou F');
+                throw new brAWebServerException('Sexo para conta inválido! Aceitos: M ou F');
             else if(!preg_match("/{$createAccountValidation->email}/i", $email))
-                throw new brAWbServerException('Email de usuário em formato inválido');
+                throw new brAWebServerException('Email de usuário em formato inválido');
 
             // @todo: Criação da conta.
             return (object)array(
@@ -158,7 +158,7 @@ namespace brAWbServer
                 WHERE
                     ApiKey = :ApiKey
                         AND
-                    (ApiUnlimitedCount = true
+                    (ApiUnlimitedCount = 1
                         or (ApiUsedCount < ApiLimitCount AND date() <= ApiExpires))
             ');
             $stmt->execute(array(
@@ -169,6 +169,6 @@ namespace brAWbServer
 
             return $bExists;
         }
-    } // fim - class brAWbServer extends \Slim\Slim
-} // fim - namespace brAWbServer
+    } // fim - class brAWebServer extends \Slim\Slim
+} // fim - namespace brAWebServer
 ?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * brAWbService
+ * brAWebService
  * Copyright (c) brAthena, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,12 +17,12 @@
  * License along with this library.
  */
 
-namespace brAWbServer
+namespace brAWebServer
 {
     /**
      * Classe padrão para as configurações do serviço do webservice.
      */
-    class brAWbServerException extends \Exception
+    class brAWebServerException extends \Exception
     {
     }
 }

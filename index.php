@@ -1,6 +1,6 @@
 <?php
 /**
- * brAWbService
+ * brAWebService
  * Copyright (c) brAthena, All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,6 +20,6 @@
 // Carrega o arquivo de configuração das contantes.
 require_once(dirname(__FILE__).'/autoloader.php');
 
-$bra = new brAWbServer\brAWbServer();
+$bra = new brAWebServer\brAWebServer();
 $bra->run();
 ?>

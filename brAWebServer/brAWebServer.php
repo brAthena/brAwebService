@@ -129,9 +129,48 @@ namespace brAWebServer
             else if(!preg_match("/{$createAccountValidation->email}/i", $email))
                 throw new brAWebServerException('Email de usuário em formato inválido');
 
-            // @todo: Criação da conta.
+            $account_id = -1;
+            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
+            
+            // Abre conexão com o mysql do ragnarok.
+            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
+                $pdoRagna->user, $pdoRagna->pass, array(
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+                ));
+
+            // Query para verificar se o nome de usuário existe.
+            // Chave no banco de dados não está unique!!! Por isso é necessário a verificação.
+            $stmt = $this->pdoRagna->prepare("SELECT account_id FROM login WHERE userid = :userid");
+            $stmt->execute(array(
+                ':userid' => $username
+            ));
+            $objAccount = $stmt->fetchObject();
+            
+            // Já existe a conta no banco de dados pois retornou alguma coisa.
+            if($objAccount !== false)
+            {
+                throw new brAWebServerException('Nome de usuário já cadastrado.');
+            }
+            
+            // Prepara a query a ser executada para inserir o usuário no banco de dados.
+            // rAthena@8d47306
+            $stmt = $this->pdoRagna->prepare("INSERT INTO login (userid, user_pass, sex, email) VALUES (:userid, :user_pass, :sex, :email);");
+            $stmt->execute(array(
+                ':userid' => $username,
+                ':user_pass' => $userpass,
+                ':sex' => $sex,
+                ':email' => $email
+            ));
+            
+            // Obtém o ultimo account_id lançado na tabela de login.
+            $account_id = $this->pdoRagna->lastInsertId();
+
+            // Fecha a conexão com o servidor do ragnarok.
+            $this->pdoRagna = null;
+
+            // Retorna o objeto de conta.
             return (object)array(
-                'account_id' => -1
+                'account_id' => $account_id
             );
         }
         

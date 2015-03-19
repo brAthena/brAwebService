@@ -55,6 +55,7 @@ namespace brAWebServer
             
             // Converte os campos para informações de filtros.
             $this->simpleXmlHnd->maintence = filter_var($this->simpleXmlHnd->maintence, FILTER_VALIDATE_BOOLEAN);
+            $this->simpleXmlHnd->privateKeySettings->inUse = filter_var($this->privateKeySettings->inUse, FILTER_VALIDATE_BOOLEAN);
             
             // Configurações padrões para a execução da aplicação.
             parent::__construct(array(

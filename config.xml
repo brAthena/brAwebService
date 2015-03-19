@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <brAWebServerConfig>
-    <maintence>off</maintence>
+    <maintence>no</maintence>
     <PdoServerConnection user="" pass="" connectionString="sqlite:brAWebService.db"/>
     <PdoRagnaConnection user="root" pass="root" connectionString="mysql:host=localhost;dbname=test;"/>
     <createAccountValidation type="regex">
@@ -9,4 +9,8 @@
         <sex>^(M|F)$</sex>
         <email>^([^@]+)@([^\.]+)\..+$</email>
     </createAccountValidation>
+    <privateKeySettings>
+        <inUse>no</inUse>
+        <key></key>
+    </privateKeySettings>
 </brAWebServerConfig>

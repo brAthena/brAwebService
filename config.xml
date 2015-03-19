@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <brAWebServerConfig>
+    <maintence>off</maintence>
     <PdoServerConnection user="" pass="" connectionString="sqlite:brAWebService.db"/>
     <PdoRagnaConnection user="root" pass="root" connectionString="mysql:host=localhost;dbname=test;"/>
     <createAccountValidation type="regex">

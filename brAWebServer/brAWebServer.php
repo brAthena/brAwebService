@@ -53,6 +53,9 @@ namespace brAWebServer
             // dos atributos corretamente.
             $this->simpleXmlHnd = json_decode(json_encode(\simplexml_load_file (dirname(__FILE__).'/../config.xml')));
             
+            // Converte os campos para informações de filtros.
+            $this->simpleXmlHnd->maintence = filter_var($this->simpleXmlHnd->maintence, FILTER_VALIDATE_BOOLEAN);
+            
             // Configurações padrões para a execução da aplicação.
             parent::__construct(array(
                 'log.writer' => new \Slim\LogWriter(fopen(dirname(__FILE__).'/../Logs/brAWebServer.log', 'a+')) // logs
@@ -66,17 +69,26 @@ namespace brAWebServer
             // Executa as operações para verificação do apiKey ao banco de dados.
             // Tirei como base: https://gist.github.com/RodolfoSilva/1f438da56cb55c1eaea0 [carloshlfz, 10/03/2015]
             $this->hook('slim.before.router', function() use ($app) {
-                // ApiKey de acesso ao sistema.
-                $apiKey = $app->request()->get('apiKey');
-
-                // Se token não foi enviado para a aplicação.
-                if(is_null($apiKey) === true)
+                
+                // Caso esteja em modo manutenção, não permite que a requisição seja continuada.
+                if($app->simpleXmlHnd->maintence === true)
                 {
-                    throw new brAWebServerException('Acesso negado. ApiKey de acesso não fornecido.');
+                    $app->halt(503, 'Em manutenção. Tente mais tarde.');
                 }
-                else if($app->checkApiKey($apiKey) === false)
-                { // ApiKey inválido.
-                    throw new brAWebServerException('Acesso negado. ApiKey inválida! Verifique por favor.');
+                else
+                {
+                    // ApiKey de acesso ao sistema.
+                    $apiKey = $app->request()->get('apiKey');
+
+                    // Se token não foi enviado para a aplicação.
+                    if(is_null($apiKey) === true)
+                    {
+                        $app->halt(400, 'Acesso negado. ApiKey de acesso não fornecido.');
+                    }
+                    else if($app->checkApiKey($apiKey) === false)
+                    { // ApiKey inválido.
+                        $app->halt(401, 'Acesso negado. ApiKey inválida! Verifique por favor.');
+                    }
                 }
             });
 
@@ -91,15 +103,17 @@ namespace brAWebServer
                 // Verifica se algum dado foi retornado de forma incorreta.
                 if(is_null($username) or is_null($username) or is_null($sex) or is_null($email))
                 {
-                    throw new brAWebServer\brAWebServerException('Nem todos os parametros para criação de conta foram recebidos.');
+                    $app->halt(400, 'Nem todos os parametros para criação de conta foram recebidos.');
                 }
                 // Testa se a conta foi criada com sucesso.
                 else if(($obj = $app->createAccount($username, $userpass, $sex, $email)) === false)
                 {
-                    throw new brAWebServer\brAWebServerException('Não foi possivel criar o nome de usuário. Verifique os parametros enviados.');
+                    $app->halt(400, 'Não foi possivel criar o nome de usuário. Verifique os parametros enviados.');
                 }
-
-                echo json_encode($obj);
+                else
+                {
+                    echo json_encode($obj);
+                }
             });
 
         } // fim - public function __construct()
@@ -121,13 +135,13 @@ namespace brAWebServer
 
             // Verifica se todos os dados recebidos estão dentro dos regex.
             if(!preg_match("/{$createAccountValidation->username}/i", $username))
-                throw new brAWebServerException('Nome de usuário em formato inválido!');
+                $this->halt(400, 'Nome de usuário em formato inválido!');
             else if(!preg_match("/{$createAccountValidation->userpass}/i", $userpass))
-                throw new brAWebServerException('Senha de usuário em formato inválido!');
+                $this->halt(400, 'Senha de usuário em formato inválido!');
             else if(!preg_match("/{$createAccountValidation->sex}/i", $sex))
-                throw new brAWebServerException('Sexo para conta inválido! Aceitos: M ou F');
+                $this->halt(400, 'Sexo para conta inválido! Aceitos: M ou F');
             else if(!preg_match("/{$createAccountValidation->email}/i", $email))
-                throw new brAWebServerException('Email de usuário em formato inválido');
+                $this->halt(400, 'Email de usuário em formato inválido');
 
             $account_id = -1;
             $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
@@ -149,7 +163,7 @@ namespace brAWebServer
             // Já existe a conta no banco de dados pois retornou alguma coisa.
             if($objAccount !== false)
             {
-                throw new brAWebServerException('Nome de usuário já cadastrado.');
+                $this->halt(401, 'Nome de usuário já cadastrado.');
             }
             
             // Prepara a query a ser executada para inserir o usuário no banco de dados.
@@ -170,7 +184,9 @@ namespace brAWebServer
 
             // Retorna o objeto de conta.
             return (object)array(
-                'account_id' => $account_id
+                'account_id' => $account_id, // Código da conta criada
+                'userid' => $username,       // Nome de usuário criado
+                'create_time' => time()      // Segundos desde 01/01/1970 até hora de retorno.
             );
         }
         
@@ -207,6 +223,21 @@ namespace brAWebServer
             $this->pdoServer = null;
 
             return $bExists;
+        }
+        
+        /**
+         * Sobre-escrito para retornar uma mensagem de erro e hora da ocorrência do problema.
+         *
+         * @see \Slim\Slim::halt()
+         *
+         * @override
+         */
+        public function halt($status, $message = '')
+        {
+            parent::halt($status, json_encode((object)array(
+                'message' => $message,
+                'time' => time()
+            )));
         }
     } // fim - class brAWebServer extends \Slim\Slim
 } // fim - namespace brAWebServer

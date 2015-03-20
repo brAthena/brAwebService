@@ -12,6 +12,6 @@
     <openSslSettings>
         <method>aes256</method>
         <password>braWebservice0000000000000000000</password>
-        <iv>braWebservice0000000000000000000</iv>
+        <iv>braWebservice000</iv>
     </openSslSettings>
 </brAWebServerConfig>

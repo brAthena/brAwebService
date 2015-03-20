@@ -55,16 +55,21 @@ namespace brAWebServer
             
             // Converte os campos para informações de filtros.
             $this->simpleXmlHnd->maintence = filter_var($this->simpleXmlHnd->maintence, FILTER_VALIDATE_BOOLEAN);
-            
+
             // Configurações padrões para a execução da aplicação.
             parent::__construct(array(
                 'log.writer' => new \Slim\LogWriter(fopen(dirname(__FILE__).'/../Logs/brAWebServer.log', 'a+')) // logs
             ));
             
-            $this->add(new \Slim\Middleware\ContentTypes());
-            
             // Iguala para poder usar dentro das funções. $this nao pode ser enviado.
             $app = $this;
+
+            // Default environment
+            $this->container->singleton('environment', function ($c) use ($app) {
+                return brAEnvironment::getInstance($app);
+            });
+
+            $this->add(new \Slim\Middleware\ContentTypes());
             
             // Executa as operações para verificação do apiKey ao banco de dados.
             // Tirei como base: https://gist.github.com/RodolfoSilva/1f438da56cb55c1eaea0 [carloshlfz, 10/03/2015]

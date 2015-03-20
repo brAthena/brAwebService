@@ -9,8 +9,9 @@
         <sex>^(M|F)$</sex>
         <email>^([^@]+)@([^\.]+)\..+$</email>
     </createAccountValidation>
-    <privateKeySettings>
-        <inUse>no</inUse>
-        <key></key>
-    </privateKeySettings>
+    <openSslSettings>
+        <method>aes256</method>
+        <password>braWebservice0000000000000000000</password>
+        <iv>braWebservice0000000000000000000</iv>
+    </openSslSettings>
 </brAWebServerConfig>

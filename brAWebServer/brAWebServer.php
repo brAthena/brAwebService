@@ -41,6 +41,12 @@ namespace brAWebServer
          * @var \PDO
          */
         public $pdoRagna;
+
+        /**
+         * Dados de criptografia para o APIKEY.
+         * @var object
+         */
+        public $apiKeyInfo;
         
         /**
          * Construtor para o objeto do servidor.
@@ -66,7 +72,7 @@ namespace brAWebServer
 
             // Default environment
             $this->container->singleton('environment', function ($c) use ($app) {
-                return brAEnvironment::getInstance($app);
+                return brAEnvironment::_getInstance($app);
             });
 
             $this->add(new \Slim\Middleware\ContentTypes());
@@ -94,6 +100,16 @@ namespace brAWebServer
                     { // ApiKey inválido.
                         $app->halt(401, 'Acesso negado. ApiKey inválida! Verifique por favor.');
                     }
+                    else
+                    {
+                        // Traduz todos os dados de criptografia recebidos.
+                        // Usado com a chave de criptografia da aplicação, não do servidor.
+                        $app->environment['slim.input'] = openssl_decrypt($app->environment['slim.input'],
+                            $app->apiKeyInfo->ApiCryptMethod,
+                            $app->apiKeyInfo->ApiCryptPassword,
+                            0,
+                            $app->apiKeyInfo->ApiCryptIV);
+                    }
                 }
             });
 
@@ -117,7 +133,7 @@ namespace brAWebServer
                 }
                 else
                 {
-                    echo json_encode($obj);
+                    echo $app->returnString(json_encode($obj));
                 }
             });
 
@@ -224,9 +240,28 @@ namespace brAWebServer
             $stmt->execute(array(
                 ':ApiKey' => $apiKey
             ));
-            $bExists = ($stmt->rowCount() > 0);
-            $this->pdoServer = null;
 
+            // Se a chave existir, então carregará em memória os dados para criptografia da mesma.
+            if(($bExists = ($stmt->rowCount() > 0)) === true)
+            {
+                $stmt = $this->pdoServer->prepare('
+                    SELECT
+                        ApiCryptMethod,
+                        ApiCryptPassword,
+                        ApiCryptIV
+                    FROM
+                        brawbkeys
+                    WHERE
+                        ApiKey = :ApiKey
+                ');
+                $stmt->execute(array(
+                    ':ApiKey' => $apiKey
+                ));
+                // Obtém os dados e joga num atributo da classe.
+                $this->apiKeyInfo = $stmt->fetchObject();
+            }
+
+            $this->pdoServer = null;
             return $bExists;
         }
         
@@ -239,10 +274,26 @@ namespace brAWebServer
          */
         public function halt($status, $message = '')
         {
-            parent::halt($status, json_encode((object)array(
+            parent::halt($status, $this->returnString(json_encode((object)array(
                 'message' => $message,
                 'time' => time()
-            )));
+            ))));
+        }
+
+        /**
+         * Retorna a string criptografada.
+         *
+         * @param string $str
+         *
+         * @return string
+         */
+        public function returnString($str)
+        {
+            return openssl_encrypt($str,
+                                            $this->apiKeyInfo->ApiCryptMethod,
+                                            $this->apiKeyInfo->ApiCryptPassword,
+                                            0,
+                                            $this->apiKeyInfo->ApiCryptIV);
         }
     } // fim - class brAWebServer extends \Slim\Slim
 } // fim - namespace brAWebServer

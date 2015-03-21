@@ -2,7 +2,7 @@
 <brAWebServerConfig>
     <maintence>no</maintence>
     <PdoServerConnection user="" pass="" connectionString="sqlite:brAWebService.db"/>
-    <PdoRagnaConnection user="root" pass="root" connectionString="mysql:host=localhost;dbname=test;"/>
+    <PdoRagnaConnection user="ragnarok" pass="ragnarok" connectionString="mysql:host=localhost;dbname=ragnarok;"/>
     <createAccountValidation type="regex">
         <username>^([a-z0-9]{4,24})$</username>
         <userpass>^([a-f0-9]{32})$</userpass>

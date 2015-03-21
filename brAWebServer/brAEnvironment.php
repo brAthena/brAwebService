@@ -97,7 +97,7 @@ namespace brAWebServer
         /**
          * @see \Slim\Environment
          */
-        public static function getInstance(brAWebServer $app)
+        public static function _getInstance(brAWebServer $app)
         {
             if (is_null(self::$environment) || $refresh) {
                 self::$environment = new self($app);

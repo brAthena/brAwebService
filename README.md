@@ -43,6 +43,7 @@ Com ele, você poderá adicionar ao seu atualizador uma funcionalidade para cada
 * [Documentação do brAWebService](https://github.com/carloshenrq/brawebservice/wiki)
     * [Configurando o brAWebService](https://github.com/carloshenrq/brawebservice/wiki/Configurando-o-brAWebService)
     * [Criando uma Conta](https://github.com/carloshenrq/brawebservice/wiki/Criando-uma-Conta)
+* [brAWebClient (PHP e C#)](https://github.com/carloshenrq/brawebclient)
 * [brAthena](http://forum.brathena.org/)
 * [Apache](https://www.apache.org/)
 * [PHP](http://php.net/)

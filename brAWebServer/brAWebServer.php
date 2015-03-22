@@ -275,6 +275,7 @@ namespace brAWebServer
         public function halt($status, $message = '')
         {
             parent::halt($status, $this->returnString(json_encode((object)array(
+                'code' => $status,
                 'message' => $message,
                 'time' => time()
             ))));
@@ -289,11 +290,11 @@ namespace brAWebServer
          */
         public function returnString($str)
         {
-            return openssl_encrypt($str,
-                                            $this->apiKeyInfo->ApiCryptMethod,
-                                            $this->apiKeyInfo->ApiCryptPassword,
-                                            0,
-                                            $this->apiKeyInfo->ApiCryptIV);
+            return (($this->apiKeyInfo != null) ? openssl_encrypt($str,
+                    $this->apiKeyInfo->ApiCryptMethod,
+                    $this->apiKeyInfo->ApiCryptPassword,
+                    0,
+                    $this->apiKeyInfo->ApiCryptIV):$str);
         }
     } // fim - class brAWebServer extends \Slim\Slim
 } // fim - namespace brAWebServer

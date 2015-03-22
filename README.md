@@ -12,9 +12,9 @@ Durante o desenvolvimento do **brAWebService** foram utilizados:
     * Apache 2.2.x
         * mod_rewrite: habilitado.
 * PHP 5.3+
-    * Configurações: SimpleXmlReader
+    * Configurações: SimpleXmlReader e OpenSSL
     * Banco de dados: PDO, PDO_MYSQL, PDO_SQLITE
-    * Framework: Slim Framework (http://www.slimframework.com/)
+    * Framework: [Slim Framework](http://www.slimframework.com/)
 
 ## Instalação
 
@@ -22,7 +22,7 @@ Durante o desenvolvimento do **brAWebService** foram utilizados:
 
 ## Resolvendo Problemas
 
-Se você está com problemas ao utilizar o serviço você primeiro deve verificar se está documentado o problema. Realize uma busca em nossa Wiki e em nosso Issue list (https://github.com/carloshenrq/brAWebService/issues) para saber se já resolvido ou como contornar a situação.
+Se você está com problemas ao utilizar o serviço você primeiro deve verificar se está documentado o problema. Realize uma busca em nossa Wiki e em nosso [Issue list](https://github.com/carloshenrq/brAWebService/issues) para saber se já resolvido ou como contornar a situação.
 
 Se você não encontrar a solução do problema em nossa documentação, porque não criar um issue? ^.^
 
@@ -40,5 +40,11 @@ Com ele, você poderá adicionar ao seu atualizador uma funcionalidade para cada
 
 ## Links Úteis
 
-*Comming soon...*
+* [Documentação do brAWebService](https://github.com/carloshenrq/brawebservice/wiki)
+    * [Configurando o brAWebService](https://github.com/carloshenrq/brawebservice/wiki/Configurando-o-brAWebService)
+    * [Criando uma Conta](https://github.com/carloshenrq/brawebservice/wiki/Criando-uma-Conta)
+* [brAthena](http://forum.brathena.org/)
+* [Apache](https://www.apache.org/)
+* [PHP](http://php.net/)
+    * [Slim Framework](http://www.slimframework.com/)
 

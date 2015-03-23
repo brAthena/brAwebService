@@ -115,26 +115,42 @@ namespace brAWebServer
 
             // Adiciona o método para put de crição de contas.
             $this->put('/account/', function() use ($app) {
-                // Obtém os dados da requisição do put.
-                $username = $app->request()->put('username');
-                $userpass = $app->request()->put('userpass');
-                $sex = $app->request()->put('sex');
-                $email = $app->request()->put('email');
-                
-                // Verifica se algum dado foi retornado de forma incorreta.
-                if(is_null($username) or is_null($username) or is_null($sex) or is_null($email))
-                {
-                    $app->halt(400, 'Nem todos os parametros para criação de conta foram recebidos.');
-                }
-                // Testa se a conta foi criada com sucesso.
-                else if(($obj = $app->createAccount($username, $userpass, $sex, $email)) === false)
-                {
-                    $app->halt(400, 'Não foi possivel criar o nome de usuário. Verifique os parametros enviados.');
-                }
-                else
-                {
-                    echo $app->returnString(json_encode($obj));
-                }
+                bra_Account_Put($app);
+            });
+
+            // Adiciona método para POST de realizar login.
+            $this->post('/account/login/', function() use ($app) {
+                bra_AccountLogin_Post($app);
+            });
+            
+            // Adiciona método para POST de alteração de senha.
+            $this->post('/account/password/', function() use ($app) {
+                bra_AccountChangePass_Post($app);
+            });
+            
+            // Adiciona método para POST de alteração de email.
+            $this->post('/account/email/', function() use ($app) {
+                bra_AccountChangeMail_Post($app);
+            });
+            
+            // Adiciona método para POST de alteração de sexo.
+            $this->post('/account/sex/', function() use ($app) {
+                bra_AccountChangeSex_Post($app);
+            });
+            
+            // Adiciona método para GET de listagem de personagens.
+            $this->get('/account/chars/', function() use ($app) {
+                bra_CharList_Get($app);
+            });
+            
+            // Adiciona método para POST de alteração de posição.
+            $this->post('/account/chars/reset/posit/', function() use ($app) {
+                bra_CharResetPosit_Post($app);
+            });
+            
+            // Adiciona método para POST de alteração de posição.
+            $this->post('/account/chars/reset/appear/', function() use ($app) {
+                bra_CharResetAppear_Post($app);
             });
 
         } // fim - public function __construct()

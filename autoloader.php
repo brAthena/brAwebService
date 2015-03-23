@@ -17,6 +17,7 @@
  * License along with this library.
  */
 
+require_once(dirname(__FILE__).'/callback.php');
 require_once(dirname(__FILE__).'/Slim/Slim.php');
 
 // Registra o autoload para o Slim Framework.

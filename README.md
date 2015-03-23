@@ -40,6 +40,8 @@ Com ele, você poderá adicionar ao seu atualizador uma funcionalidade para cada
 
 ## Links Úteis
 
+Abaixo segue uma relação de links que podem ser uteis na implementação do *brAWebService*.
+
 * [Documentação do brAWebService](https://github.com/carloshenrq/brawebservice/wiki)
     * [Configurando o brAWebService](https://github.com/carloshenrq/brawebservice/wiki/Configurando-o-brAWebService)
     * [Criando uma Conta](https://github.com/carloshenrq/brawebservice/wiki/Criando-uma-Conta)

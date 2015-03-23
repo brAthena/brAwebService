@@ -20,9 +20,9 @@
 /**
  * Função para listar todos os personagens da conta.
  *
- * @param \brAWebService\brAWebService $app
+ * @param \brAWebServer\brAWebServer $app
  */
-function bra_CharList_Get(\brAWebService\brAWebService $app)
+function bra_CharList_Get(\brAWebServer\brAWebServer $app)
 {
     $app->halt(503, 'Em manutenção. Tente mais tarde.');
 }
@@ -30,9 +30,9 @@ function bra_CharList_Get(\brAWebService\brAWebService $app)
 /**
  * Função para resetar a aparencia dos personagens.
  *
- * @param \brAWebService\brAWebService $app
+ * @param \brAWebServer\brAWebServer $app
  */
-function bra_CharResetAppear_Post(\brAWebService\brAWebService $app)
+function bra_CharResetAppear_Post(\brAWebServer\brAWebServer $app)
 {
     $app->halt(503, 'Em manutenção. Tente mais tarde.');
 }
@@ -40,9 +40,9 @@ function bra_CharResetAppear_Post(\brAWebService\brAWebService $app)
 /**
  * Função para resetar a posição dos personagens.
  *
- * @param \brAWebService\brAWebService $app
+ * @param \brAWebServer\brAWebServer $app
  */
-function bra_CharResetPosit_Post(\brAWebService\brAWebService $app)
+function bra_CharResetPosit_Post(\brAWebServer\brAWebServer $app)
 {
     $app->halt(503, 'Em manutenção. Tente mais tarde.');
 }
@@ -50,9 +50,9 @@ function bra_CharResetPosit_Post(\brAWebService\brAWebService $app)
 /**
  * Função para alterar o sexo de uma conta no brAWebService.
  *
- * @param \brAWebService\brAWebService $app
+ * @param \brAWebServer\brAWebServer $app
  */
-function bra_AccountChangeSex_Post(\brAWebService\brAWebService $app)
+function bra_AccountChangeSex_Post(\brAWebServer\brAWebServer $app)
 {
     $app->halt(503, 'Em manutenção. Tente mais tarde.');
 }
@@ -60,9 +60,9 @@ function bra_AccountChangeSex_Post(\brAWebService\brAWebService $app)
 /**
  * Função para alterar o email de conta no brAWebService.
  *
- * @param \brAWebService\brAWebService $app
+ * @param \brAWebServer\brAWebServer $app
  */
-function bra_AccountChangeMail_Post(\brAWebService\brAWebService $app)
+function bra_AccountChangeMail_Post(\brAWebServer\brAWebServer $app)
 {
     $app->halt(503, 'Em manutenção. Tente mais tarde.');
 }
@@ -70,9 +70,9 @@ function bra_AccountChangeMail_Post(\brAWebService\brAWebService $app)
 /**
  * Função para alterar uma senha de conta no brAWebService.
  *
- * @param \brAWebService\brAWebService $app
+ * @param \brAWebServer\brAWebServer $app
  */
-function bra_AccountChangePass_Post(\brAWebService\brAWebService $app)
+function bra_AccountChangePass_Post(\brAWebServer\brAWebServer $app)
 {
     $app->halt(503, 'Em manutenção. Tente mais tarde.');
 }
@@ -80,19 +80,34 @@ function bra_AccountChangePass_Post(\brAWebService\brAWebService $app)
 /**
  * Função para iniciar uma sessão de uma conta no brAWebService.
  *
- * @param \brAWebService\brAWebService $app
+ * @param \brAWebServer\brAWebServer $app
  */
-function bra_AccountLogin_Post(\brAWebService\brAWebService $app)
+function bra_AccountLogin_Post(\brAWebServer\brAWebServer $app)
 {
-    $app->halt(503, 'Em manutenção. Tente mais tarde.');
+    // Obtém os dados da requisição do POST.
+    $username = $app->request()->post('username');
+    $userpass = $app->request()->post('userpass');
+
+    if(is_null($username) or is_null($userpass))
+    {
+        $app->halt(400, 'Nem todos os parametros para login de conta foram recebidos.');
+    }
+    else if(($obj = $app->login($username, $userpass)) === false)
+    {
+        $app->halt(401, 'Nome de usuário/senha inválidos.');
+    }
+    else
+    {
+        echo $app->returnString(json_encode($obj));
+    }
 }
 
 /**
  * Função para criação de uma conta.
  *
- * @param \brAWebService\brAWebService $app
+ * @param \brAWebServer\brAWebServer $app
  */
-function bra_Account_Put(\brAWebService\brAWebService $app)
+function bra_Account_Put(\brAWebServer\brAWebServer $app)
 {
     // Obtém os dados da requisição do put.
     $username = $app->request()->put('username');

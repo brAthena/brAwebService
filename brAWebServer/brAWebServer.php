@@ -109,6 +109,7 @@ namespace brAWebServer
                             $app->apiKeyInfo->ApiCryptPassword,
                             0,
                             $app->apiKeyInfo->ApiCryptIV);
+                        unset($app->environment['slim.request.form_hash']);
                     }
                 }
             });
@@ -155,6 +156,63 @@ namespace brAWebServer
 
         } // fim - public function __construct()
         
+        /**
+         * Tenta realizar o login na conta indicada.
+         *
+         * @param string $username Nome do usuário a realizar login. [Padrão: ^([a-z0-9]{4,24})$]
+         * @param string $userpass Senha de usuário. [Padrão: ^([a-f0-9]{32})$]
+         *
+         * @return object
+         */
+        public function login($username, $userpass)
+        {
+            // Obtém as validações regex para este método.
+            $createAccountValidation = $this->simpleXmlHnd->createAccountValidation;
+
+            // Verifica se todos os dados recebidos estão dentro dos regex.
+            if(!preg_match("/{$createAccountValidation->username}/i", $username))
+                $this->halt(400, 'Nome de usuário em formato inválido!');
+            else if(!preg_match("/{$createAccountValidation->userpass}/i", $userpass))
+                $this->halt(400, 'Senha de usuário em formato inválido!');
+
+            $account_id = -1;
+            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
+            
+            // Abre conexão com o mysql do ragnarok.
+            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
+                $pdoRagna->user, $pdoRagna->pass, array(
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+                ));
+
+            // Executa a consulta no banco de dados.
+            $stmt = $this->pdoRagna->prepare("SELECT account_id, userid FROM login WHERE userid = :userid AND user_pass = :user_pass");
+            $stmt->execute(array(
+                ':userid' => $username,
+                ':user_pass' => $userpass
+            ));
+            // Retorna os dados para verificação.
+            $obj = $stmt->fetchObject();
+
+            // Não encontrou o nome de usuário.
+            if($obj === false)
+            {
+                return false;
+            }
+
+            // Obtém os dados da conta logada.
+            $account_id = $obj->account_id;
+            $username = $obj->userid;
+
+            // Fecha a conexão com o servidor do ragnarok.
+            $this->pdoRagna = null;
+
+            return (object)array(
+                'account_id' => $account_id,
+                'username' => $username,
+                'loginTime' => time()
+            );
+        }
+
         /**
          * Cria uma conta no banco de dados e retorna o objeto com os dados de criação.
          *

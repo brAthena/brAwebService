@@ -10,7 +10,7 @@
         <email>^([^@]+)@([^\.]+)\..+$</email>
     </createAccountValidation>
     <openSslSettings>
-        <method>aes256</method>
+        <method>aes-256-cbc</method>
         <password>braWebservice0000000000000000000</password>
         <iv>braWebservice000</iv>
     </openSslSettings>

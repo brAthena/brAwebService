@@ -116,41 +116,73 @@ namespace brAWebServer
 
             // Adiciona o método para put de crição de contas.
             $this->put('/account/', function() use ($app) {
+                if(($app->apiKeyInfo->ApiPermission&'10000000000000000000') <> '10000000000000000000')
+                {
+                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
+                }
                 bra_Account_Put($app);
             });
 
             // Adiciona método para POST de realizar login.
             $this->post('/account/login/', function() use ($app) {
+                if(($app->apiKeyInfo->ApiPermission&'01000000000000000000') <> '01000000000000000000')
+                {
+                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
+                }
                 bra_AccountLogin_Post($app);
             });
             
             // Adiciona método para POST de alteração de senha.
             $this->post('/account/password/', function() use ($app) {
+                if(($app->apiKeyInfo->ApiPermission&'01100000000000000000') <> '01100000000000000000')
+                {
+                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
+                }
                 bra_AccountChangePass_Post($app);
             });
             
             // Adiciona método para POST de alteração de email.
             $this->post('/account/email/', function() use ($app) {
+                if(($app->apiKeyInfo->ApiPermission&'01010000000000000000') <> '01010000000000000000')
+                {
+                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
+                }
                 bra_AccountChangeMail_Post($app);
             });
             
             // Adiciona método para POST de alteração de sexo.
             $this->post('/account/sex/', function() use ($app) {
+                if(($app->apiKeyInfo->ApiPermission&'01001000000000000000') <> '01001000000000000000')
+                {
+                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
+                }
                 bra_AccountChangeSex_Post($app);
             });
             
             // Adiciona método para GET de listagem de personagens.
             $this->get('/account/chars/', function() use ($app) {
+                if(($app->apiKeyInfo->ApiPermission&'01000100000000000000') <> '01000100000000000000')
+                {
+                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
+                }
                 bra_CharList_Get($app);
             });
             
             // Adiciona método para POST de alteração de posição.
             $this->post('/account/chars/reset/posit/', function() use ($app) {
+                if(($app->apiKeyInfo->ApiPermission&'01000010000000000000') <> '01000010000000000000')
+                {
+                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
+                }
                 bra_CharResetPosit_Post($app);
             });
             
             // Adiciona método para POST de alteração de posição.
             $this->post('/account/chars/reset/appear/', function() use ($app) {
+                if(($app->apiKeyInfo->ApiPermission&'01000001000000000000') <> '01000001000000000000')
+                {
+                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
+                }
                 bra_CharResetAppear_Post($app);
             });
 
@@ -464,6 +496,7 @@ namespace brAWebServer
             {
                 $stmt = $this->pdoServer->prepare('
                     SELECT
+                        ApiPermission,
                         ApiCryptMethod,
                         ApiCryptPassword,
                         ApiCryptIV

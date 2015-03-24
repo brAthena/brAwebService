@@ -23,8 +23,5 @@ CREATE TABLE brawbkeys (
     ApiExpires DATE,
     ApiUsedCount INTEGER DEFAULT (0) NOT NULL,
     ApiLimitCount INTEGER DEFAULT (5000) NOT NULL,
-    ApiUnlimitedCount BOOLEAN NOT NULL DEFAULT false,
-    ApiCryptMethod VARCHAR(20) NULL DEFAULT NULL,
-    ApiCryptPassword VARCHAR(32) NULL DEFAULT NULL,
-    ApiCryptIV VARCHAR(32) NULL DEFAULT NULL
+    ApiUnlimitedCount BOOLEAN NOT NULL DEFAULT false
 );

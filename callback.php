@@ -54,7 +54,31 @@ function bra_CharResetPosit_Post(\brAWebServer\brAWebServer $app)
  */
 function bra_AccountChangeSex_Post(\brAWebServer\brAWebServer $app)
 {
-    $app->halt(503, 'Em manutenção. Tente mais tarde.');
+    // Obtém os dados da requisição POST.
+    $username = $app->request()->post('username');
+    $userpass = $app->request()->post('userpass');
+    $sex = $app->request()->post('sex');
+    
+    if(is_null($username) or is_null($userpass) or is_null($sex))
+    {
+        $app->halt(400, 'Nem todos os parametros para alteração de sexo foram recebidos.');
+    }
+    else if(($obj = $app->login($username, $userpass)) === false)
+    {
+        $app->halt(401, 'Nome de usuário/senha inválidos.');
+    }
+    else if($app->changeSex($obj->account_id, $sex) === false)
+    {
+        $app->halt(401, 'Ocorreu um erro durante do sexo.');
+    }
+    else
+    {
+        echo $app->returnString(json_encode((object)array(
+            'account_id' => $obj->account_id,
+            'message' => 'Sexo alterado com sucesso.',
+            'time' => time()
+        )));
+    }
 }
 
 /**
@@ -64,7 +88,32 @@ function bra_AccountChangeSex_Post(\brAWebServer\brAWebServer $app)
  */
 function bra_AccountChangeMail_Post(\brAWebServer\brAWebServer $app)
 {
-    $app->halt(503, 'Em manutenção. Tente mais tarde.');
+    // Obtém os dados da requisição POST.
+    $username = $app->request()->post('username');
+    $userpass = $app->request()->post('userpass');
+    $newemail = $app->request()->post('new_email');
+    $oldemail = $app->request()->post('old_email');
+    
+    if(is_null($username) or is_null($userpass) or is_null($newemail) or is_null($oldemail))
+    {
+        $app->halt(400, 'Nem todos os parametros para alteração de email foram recebidos.');
+    }
+    else if(($obj = $app->login($username, $userpass)) === false)
+    {
+        $app->halt(401, 'Nome de usuário/senha inválidos.');
+    }
+    else if($app->changeMail($obj->account_id, $oldemail, $newemail))
+    {
+        $app->halt(401, 'Ocorreu um erro durante a alteração de email.');
+    }
+    else
+    {
+        echo $app->returnString(json_encode((object)array(
+            'account_id' => $obj->account_id,
+            'message' => 'Email alterado com sucesso.',
+            'time' => time()
+        )));
+    }
 }
 
 /**

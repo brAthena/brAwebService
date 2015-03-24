@@ -157,6 +157,102 @@ namespace brAWebServer
         } // fim - public function __construct()
         
         /**
+         * Realiza alteração de sexo da conta do usuário.
+         *
+         * @param integer $account_id
+         * @param string $sex
+         *
+         * @return boolean
+         */
+        public function changeSex($account_id, $sex)
+        {
+            // Obtém as validações regex para este método.
+            $createAccountValidation = $this->simpleXmlHnd->createAccountValidation;
+
+            if(!preg_match("/{$createAccountValidation->sex}/i", $old_email))
+                $this->halt(400, 'Sexo de conta em formato incorreto!');
+
+            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
+            
+            // Abre conexão com o mysql do ragnarok.
+            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
+                $pdoRagna->user, $pdoRagna->pass, array(
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+                ));
+
+            $stmt = $this->pdoRagna->prepare("
+                UPDATE
+                    login
+                SET
+                    sex = :sex
+                WHERE
+                    account_id = :account_id
+            ");
+            $stmt->execute(array(
+                ':new_email' => $new_email,
+                ':account_id' => $account_id,
+                ':old_email' => $old_email
+            ));
+
+            $bChanged = $stmt->rowCount() > 0;
+
+            $this->pdoRagna = null;
+
+            return $bChanged;
+        }
+        
+        /**
+         * Realiza alteração de email da conta do usuário.
+         *
+         * @param integer $account_id
+         * @param string $old_email
+         * @param string $new_email
+         *
+         * @return boolean
+         */
+        public function changeMail($account_id, $old_email, $new_email)
+        {
+            // Obtém as validações regex para este método.
+            $createAccountValidation = $this->simpleXmlHnd->createAccountValidation;
+
+            if(!preg_match("/{$createAccountValidation->email}/i", $old_email))
+                $this->halt(400, 'Endereço de email em formato inválido!');
+            else if(!preg_match("/{$createAccountValidation->email}/i", $new_email))
+                $this->halt(400, 'Endereço de email em formato inválido!');
+            else if($old_email == $new_email)
+                return false;
+
+            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
+            
+            // Abre conexão com o mysql do ragnarok.
+            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
+                $pdoRagna->user, $pdoRagna->pass, array(
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+                ));
+
+            $stmt = $this->pdoRagna->prepare("
+                UPDATE
+                    login
+                SET
+                    email = :new_email
+                WHERE
+                    account_id = :account_id AND
+                    email = :old_email
+            ");
+            $stmt->execute(array(
+                ':new_email' => $new_email,
+                ':account_id' => $account_id,
+                ':old_email' => $old_email
+            ));
+
+            $bChanged = $stmt->rowCount() > 0;
+
+            $this->pdoRagna = null;
+
+            return $bChanged;
+        }
+        
+        /**
          * Tenta realizar a alteração de senha no usuário identificado.
          *
          * @param integer $account_id Código da conta que será alterado.

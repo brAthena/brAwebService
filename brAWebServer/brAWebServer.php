@@ -489,10 +489,7 @@ namespace brAWebServer
             {
                 $stmt = $this->pdoServer->prepare('
                     SELECT
-                        ApiPermission,
-                        ApiCryptMethod,
-                        ApiCryptPassword,
-                        ApiCryptIV
+                        *
                     FROM
                         brawbkeys
                     WHERE

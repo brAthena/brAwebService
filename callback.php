@@ -74,7 +74,31 @@ function bra_AccountChangeMail_Post(\brAWebServer\brAWebServer $app)
  */
 function bra_AccountChangePass_Post(\brAWebServer\brAWebServer $app)
 {
-    $app->halt(503, 'Em manutenção. Tente mais tarde.');
+    // Obtém os dados da requisição POST.
+    $username = $app->request()->post('username');
+    $userpass = $app->request()->post('userpass');
+    $newpass = $app->request()->post('newpass');
+
+    if(is_null($username) or is_null($userpass) or is_null($newpass))
+    {
+        $app->halt(400, 'Nem todos os parametros para alteração de senha foram recebidos.');
+    }
+    else if(($obj = $app->login($username, $userpass)) === false)
+    {
+        $app->halt(401, 'Nome de usuário/senha inválidos.');
+    }
+    else if($app->changePass($obj->account_id, $userpass, $newpass) === false)
+    {
+        $app->halt(401, 'Ocorreu um erro durante a alteração de senha.');
+    }
+    else
+    {
+        echo $app->returnString(json_encode((object)array(
+            'account_id' => $obj->account_id,
+            'message' => 'Senha alterada com sucesso.',
+            'time' => time()
+        )));
+    }
 }
 
 /**

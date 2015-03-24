@@ -157,6 +157,54 @@ namespace brAWebServer
         } // fim - public function __construct()
         
         /**
+         * Tenta realizar a alteração de senha no usuário identificado.
+         *
+         * @param integer $account_id Código da conta que será alterado.
+         * @param string $old_userpass Senha antiga da conta.
+         * @param string $new_userpass Senha nova da conta.
+         */
+        public function changePass($account_id, $old_userpass, $new_userpass)
+        {
+            // Obtém as validações regex para este método.
+            $createAccountValidation = $this->simpleXmlHnd->createAccountValidation;
+
+            if(!preg_match("/{$createAccountValidation->userpass}/i", $old_userpass))
+                $this->halt(400, 'Senhas de usuário em formato inválido!');
+            else if(!preg_match("/{$createAccountValidation->userpass}/i", $new_userpass))
+                $this->halt(400, 'Senhas de usuário em formato inválido!');
+            else if($old_userpass == $new_userpass)
+                return false;
+
+            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
+            
+            // Abre conexão com o mysql do ragnarok.
+            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
+                $pdoRagna->user, $pdoRagna->pass, array(
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+                ));
+
+            $stmt = $this->pdoRagna->prepare("
+                UPDATE
+                    login
+                SET
+                    user_pass = :new_userpass
+                WHERE
+                    account_id = :account_id AND
+                    user_pass = :old_userpass");
+            $stmt->execute(array(
+                ':new_userpass' => $new_userpass,
+                ':account_id' => $account_id,
+                ':old_userpass' => $old_userpass
+            ));
+
+            $bChanged = $stmt->rowCount() > 0;
+
+            $this->pdoRagna = null;
+
+            return $bChanged;
+        }
+
+        /**
          * Tenta realizar o login na conta indicada.
          *
          * @param string $username Nome do usuário a realizar login. [Padrão: ^([a-z0-9]{4,24})$]

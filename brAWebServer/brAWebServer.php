@@ -102,14 +102,7 @@ namespace brAWebServer
                     }
                     else
                     {
-                        // Traduz todos os dados de criptografia recebidos.
-                        // Usado com a chave de criptografia da aplicação, não do servidor.
-                        $app->environment['slim.input'] = openssl_decrypt($app->environment['slim.input'],
-                            $app->apiKeyInfo->ApiCryptMethod,
-                            $app->apiKeyInfo->ApiCryptPassword,
-                            0,
-                            $app->apiKeyInfo->ApiCryptIV);
-                        unset($app->environment['slim.request.form_hash']);
+                        // @todo: Criptografia do slim.input
                     }
                 }
             });
@@ -541,11 +534,7 @@ namespace brAWebServer
          */
         public function returnString($str)
         {
-            return (($this->apiKeyInfo != null) ? openssl_encrypt($str,
-                    $this->apiKeyInfo->ApiCryptMethod,
-                    $this->apiKeyInfo->ApiCryptPassword,
-                    0,
-                    $this->apiKeyInfo->ApiCryptIV):$str);
+            return $str;
         }
     } // fim - class brAWebServer extends \Slim\Slim
 } // fim - namespace brAWebServer

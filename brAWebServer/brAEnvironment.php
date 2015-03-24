@@ -31,9 +31,6 @@ namespace brAWebServer
         {
             $env = array();
 
-            // Obtem as configurações de OpenSSL para tratamento dos dados recebidos.
-            $openssl = $app->simpleXmlHnd->openSslSettings;
-
             //The HTTP request method
             $env['REQUEST_METHOD'] = $_SERVER['REQUEST_METHOD'];
 
@@ -62,8 +59,7 @@ namespace brAWebServer
             $env['PATH_INFO'] = '/' . ltrim($env['PATH_INFO'], '/'); // <-- Ensure leading slash
 
             // Query string (without leading "?")
-            $env['QUERY_STRING'] = ((strlen($queryString) > 0) ? openssl_decrypt($queryString,
-                                                            $openssl->method, $openssl->password, 0, $openssl->iv):'');
+            $env['QUERY_STRING'] = $queryString;
 
             //Name of server host that is running the script
             $env['SERVER_NAME'] = $_SERVER['SERVER_NAME'];

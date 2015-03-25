@@ -221,6 +221,91 @@ namespace brAWebServer
         }
 
         /**
+         * Reseta a aparência de um personagem que não esteja online.
+         *
+         * @param integer $account_id Conta do personagem que será resetado.
+         * @param integer $char_id Código do char que será resetado.
+         *
+         * @return boolean
+         */
+        public function charResetAppear($account_id, $char_id)
+        {
+            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
+            
+            // Abre conexão com o mysql do ragnarok.
+            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
+                $pdoRagna->user, $pdoRagna->pass, array(
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+                ));
+
+            $stmt = $this->pdoRagna->prepare("
+                UPDATE
+                    `char`
+                SET
+                    hair = 0,
+                    hair_color = 0,
+                    clothes_color = 0,
+                    head_top = 0,
+                    head_mid = 0,
+                    head_bottom = 0
+                WHERE
+                    account_id = :account_id AND
+                    char_id = :char_id AND
+                    online = 0
+            ");
+            $stmt->execute(array(
+                ':account_id' => $account_id,
+                ':char_id' => $char_id
+            ));
+
+            $bAparenciaResetada = $stmt->rowCount() > 0;
+
+            $this->pdoRagna = null;
+            return $bAparenciaResetada;
+        }
+
+        /**
+         * Reseta a posição de um personagem que não esteja online.
+         *
+         * @param integer $account_id Conta do personagem que será resetado.
+         * @param integer $char_id Código do char que será resetado.
+         *
+         * @return boolean
+         */
+        public function charResetPosit($account_id, $char_id)
+        {
+            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
+            
+            // Abre conexão com o mysql do ragnarok.
+            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
+                $pdoRagna->user, $pdoRagna->pass, array(
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+                ));
+
+            $stmt = $this->pdoRagna->prepare("
+                UPDATE
+                    `char`
+                SET
+                    last_map = save_map,
+                    last_x = save_x,
+                    last_y = save_y
+                WHERE
+                    account_id = :account_id AND
+                    char_id = :char_id AND
+                    online = 0
+            ");
+            $stmt->execute(array(
+                ':account_id' => $account_id,
+                ':char_id' => $char_id
+            ));
+
+            $bPosicaoResetada = $stmt->rowCount() > 0;
+
+            $this->pdoRagna = null;
+            return $bPosicaoResetada;
+        }
+
+        /**
          * Obtém a lista de personagens para a conta solicitada.
          *
          * @param integer $account_id

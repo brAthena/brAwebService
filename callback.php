@@ -45,7 +45,25 @@ function bra_CharList_Post(\brAWebServer\brAWebServer $app)
  */
 function bra_CharResetAppear_Post(\brAWebServer\brAWebServer $app)
 {
-    $app->halt(503, 'Em manutenção. Tente mais tarde.');
+    // Obtém os dados da requisição POST.
+    $request = $app->getRequestFields(array('username', 'userpass', 'char_id'));
+
+    if(($obj = $app->login($request->username, $request->userpass)) === false)
+    {
+        $app->halt(401, 'Nome de usuário/senha inválidos.');
+    }
+    else if($app->charResetAppear($obj->account_id, $request->char_id) === false)
+    {
+        $app->halt(400, 'Impossivel resetar a aparência do personagem.');
+    }
+    else
+    {
+        $app->halt(200, json_encode((object)array(
+            'account_id' => $obj->account_id,
+            'char_id' => $request->char_id,
+            'message' => 'Aparência resetada com sucesso.'
+        )));
+    }
 }
 
 /**
@@ -55,7 +73,25 @@ function bra_CharResetAppear_Post(\brAWebServer\brAWebServer $app)
  */
 function bra_CharResetPosit_Post(\brAWebServer\brAWebServer $app)
 {
-    $app->halt(503, 'Em manutenção. Tente mais tarde.');
+    // Obtém os dados da requisição POST.
+    $request = $app->getRequestFields(array('username', 'userpass', 'char_id'));
+
+    if(($obj = $app->login($request->username, $request->userpass)) === false)
+    {
+        $app->halt(401, 'Nome de usuário/senha inválidos.');
+    }
+    else if($app->charResetPosit($obj->account_id, $request->char_id) === false)
+    {
+        $app->halt(400, 'Impossivel resetar a posição do personagem.');
+    }
+    else
+    {
+        $app->halt(200, json_encode((object)array(
+            'account_id' => $obj->account_id,
+            'char_id' => $request->char_id,
+            'message' => 'Posição resetada com sucesso.'
+        )));
+    }
 }
 
 /**

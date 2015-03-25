@@ -3,6 +3,8 @@
 CREATE TABLE brawbkeys (
     KeyID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     ApiKey VARCHAR (32) UNIQUE NOT NULL,
+	ApiPassMethod VARCHAR(20) NOT NULL,
+	ApiKeyCreated INTEGER DEFAULT (0) NOT NULL,
     -- -------------------------------------------------------------------------------------------------------------- --
     -- Será composto de 10 caracteres e estará no formato : 00000000000000000000.
     -- Cada caractere será uma permissão que o APIKEY poderá realizar, onde 1 permite e 0 bloqueia.

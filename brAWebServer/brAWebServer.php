@@ -102,7 +102,9 @@ namespace brAWebServer
                     }
                     else
                     {
-                        // @todo: Criptografia do slim.input
+                        // Remove a criptografia dos dados enviados.
+                        $app->environment['slim.input'] = openssl_decrypt($app->environment['slim.input'],
+                            $app->apiKeyInfo->ApiPassMethod, $app->getClientKey(), 0, '0000000000000000');
                     }
                 }
             });
@@ -180,7 +182,18 @@ namespace brAWebServer
             });
 
         } // fim - public function __construct()
-        
+
+        /**
+         * Obtém a chave de criptografia do cliente.
+         *
+         * @return string
+         */
+        public function getClientKey()
+        {
+            return hash('md5',
+                $this->simpleXmlHnd->openSslSettings->password.$this->apiKeyInfo->ApiKeyCreated);
+        }
+
         /**
          * Realiza alteração de sexo da conta do usuário.
          *
@@ -531,7 +544,9 @@ namespace brAWebServer
          */
         public function returnString($str)
         {
-            return $str;
+            return (($this->apiKeyInfo != null) ?
+                openssl_encrypt($str, $this->apiKeyInfo->ApiPassMethod, $this->getClientKey(), 0, '0000000000000000'):
+                    $str);
         }
     } // fim - class brAWebServer extends \Slim\Slim
 } // fim - namespace brAWebServer

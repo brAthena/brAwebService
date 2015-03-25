@@ -10,6 +10,6 @@
         <email>^([^@]+)@([^\.]+)\..+$</email>
     </createAccountValidation>
     <openSslSettings>
-        <privateKey></privateKey>
+        <password>e6023aa5a41f3d9f0b63a9558fc8fc19</password>
     </openSslSettings>
 </brAWebServerConfig>

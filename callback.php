@@ -61,7 +61,7 @@ function bra_AccountChangeSex_Post(\brAWebServer\brAWebServer $app)
     {
         $app->halt(401, 'Nome de usuário/senha inválidos.');
     }
-    else if($app->changeSex($obj->account_id, $sex) === false)
+    else if($app->changeSex($obj->account_id, $request->sex) === false)
     {
         $app->halt(401, 'Ocorreu um erro durante do sexo.');
     }

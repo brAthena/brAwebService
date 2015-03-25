@@ -233,7 +233,7 @@ namespace brAWebServer
             // Obtém as validações regex para este método.
             $accountValidation = $this->simpleXmlHnd->accountValidation;
 
-            if(!preg_match("/{$accountValidation->sex}/i", $old_email))
+            if(!preg_match("/{$accountValidation->sex}/i", $sex))
                 $this->halt(400, 'Sexo de conta em formato incorreto!');
 
             $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
@@ -254,9 +254,8 @@ namespace brAWebServer
                     group_id <= :max_group_id
             ");
             $stmt->execute(array(
-                ':new_email' => $new_email,
                 ':account_id' => $account_id,
-                ':old_email' => $old_email,
+                ':sex' => $sex,
                 ':max_group_id' => $this->simpleXmlHnd->maxGroupId
             ));
 

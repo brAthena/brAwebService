@@ -195,6 +195,31 @@ namespace brAWebServer
         }
 
         /**
+         * Obtém os campos que serão utilizados para uma requisição. Caso algum parametro não seja recebido,
+         *  então retorna 400 com a mensagem de erro.
+         *
+         * @param array $fields Campos a serem lidos.
+         * @param string $msgNull Mensagem para retorno.
+         *
+         * @return object
+         */
+        public function getRequestFields(array $fields, $msgNull = 'Parametros solicitados não foram enviados.')
+        {
+            $array2obj = array();
+            foreach($fields as $field)
+            {
+                $field_ = $this->request()->post($field);
+                if(is_null($field_) === true)
+                {
+                    $this->halt(400, $msgNull);
+                    return null;
+                }
+                $array2obj[$field] = $field_;
+            }
+            return (object)$array2obj;
+        }
+
+        /**
          * Realiza alteração de sexo da conta do usuário.
          *
          * @param integer $account_id
@@ -528,10 +553,12 @@ namespace brAWebServer
          */
         public function halt($status, $message = '')
         {
+            $time = time();
             parent::halt($status, $this->returnString(json_encode((object)array(
                 'code' => $status,
                 'message' => $message,
-                'time' => time()
+                'messageHash' => hash('sha512', $message.$time),
+                'time' => $time
             ))));
         }
 

@@ -55,15 +55,9 @@ function bra_CharResetPosit_Post(\brAWebServer\brAWebServer $app)
 function bra_AccountChangeSex_Post(\brAWebServer\brAWebServer $app)
 {
     // Obtém os dados da requisição POST.
-    $username = $app->request()->post('username');
-    $userpass = $app->request()->post('userpass');
-    $sex = $app->request()->post('sex');
+    $request = $app->getRequestFields(array('username', 'userpass', 'sex'));
     
-    if(is_null($username) or is_null($userpass) or is_null($sex))
-    {
-        $app->halt(400, 'Nem todos os parametros para alteração de sexo foram recebidos.');
-    }
-    else if(($obj = $app->login($username, $userpass)) === false)
+    if(($obj = $app->login($request->username, $request->userpass)) === false)
     {
         $app->halt(401, 'Nome de usuário/senha inválidos.');
     }
@@ -73,7 +67,7 @@ function bra_AccountChangeSex_Post(\brAWebServer\brAWebServer $app)
     }
     else
     {
-        echo $app->returnString(json_encode((object)array(
+        $app->halt(200, json_encode((object)array(
             'account_id' => $obj->account_id,
             'message' => 'Sexo alterado com sucesso.',
             'time' => time()
@@ -89,26 +83,19 @@ function bra_AccountChangeSex_Post(\brAWebServer\brAWebServer $app)
 function bra_AccountChangeMail_Post(\brAWebServer\brAWebServer $app)
 {
     // Obtém os dados da requisição POST.
-    $username = $app->request()->post('username');
-    $userpass = $app->request()->post('userpass');
-    $newemail = $app->request()->post('new_email');
-    $oldemail = $app->request()->post('old_email');
+    $request = $app->getRequestFields(array('username', 'userpass', 'new_email', 'old_email'));
     
-    if(is_null($username) or is_null($userpass) or is_null($newemail) or is_null($oldemail))
-    {
-        $app->halt(400, 'Nem todos os parametros para alteração de email foram recebidos.');
-    }
-    else if(($obj = $app->login($username, $userpass)) === false)
+    if(($obj = $app->login($request->username, $request->userpass)) === false)
     {
         $app->halt(401, 'Nome de usuário/senha inválidos.');
     }
-    else if($app->changeMail($obj->account_id, $oldemail, $newemail))
+    else if($app->changeMail($obj->account_id, $request->new_email, $request->old_email))
     {
         $app->halt(401, 'Ocorreu um erro durante a alteração de email.');
     }
     else
     {
-        echo $app->returnString(json_encode((object)array(
+        $app->halt(200, json_encode((object)array(
             'account_id' => $obj->account_id,
             'message' => 'Email alterado com sucesso.',
             'time' => time()
@@ -124,25 +111,19 @@ function bra_AccountChangeMail_Post(\brAWebServer\brAWebServer $app)
 function bra_AccountChangePass_Post(\brAWebServer\brAWebServer $app)
 {
     // Obtém os dados da requisição POST.
-    $username = $app->request()->post('username');
-    $userpass = $app->request()->post('userpass');
-    $newpass = $app->request()->post('newpass');
+    $request = $app->getRequestFields(array('username', 'userpass', 'newpass'));
 
-    if(is_null($username) or is_null($userpass) or is_null($newpass))
-    {
-        $app->halt(400, 'Nem todos os parametros para alteração de senha foram recebidos.');
-    }
-    else if(($obj = $app->login($username, $userpass)) === false)
+    if(($obj = $app->login($request->username, $request->userpass)) === false)
     {
         $app->halt(401, 'Nome de usuário/senha inválidos.');
     }
-    else if($app->changePass($obj->account_id, $userpass, $newpass) === false)
+    else if($app->changePass($obj->account_id, $request->userpass, $request->newpass) === false)
     {
         $app->halt(401, 'Ocorreu um erro durante a alteração de senha.');
     }
     else
     {
-        echo $app->returnString(json_encode((object)array(
+        $app->halt(200, json_encode((object)array(
             'account_id' => $obj->account_id,
             'message' => 'Senha alterada com sucesso.',
             'time' => time()
@@ -158,20 +139,15 @@ function bra_AccountChangePass_Post(\brAWebServer\brAWebServer $app)
 function bra_AccountLogin_Post(\brAWebServer\brAWebServer $app)
 {
     // Obtém os dados da requisição do POST.
-    $username = $app->request()->post('username');
-    $userpass = $app->request()->post('userpass');
+    $request = $app->getRequestFields(array('username', 'userpass'));
 
-    if(is_null($username) or is_null($userpass))
-    {
-        $app->halt(400, 'Nem todos os parametros para login de conta foram recebidos.');
-    }
-    else if(($obj = $app->login($username, $userpass)) === false)
+    if(($obj = $app->login($request->username, $request->userpass)) === false)
     {
         $app->halt(401, 'Nome de usuário/senha inválidos.');
     }
     else
     {
-        echo $app->returnString(json_encode($obj));
+        $app->halt(200, json_encode($obj));
     }
 }
 
@@ -183,24 +159,15 @@ function bra_AccountLogin_Post(\brAWebServer\brAWebServer $app)
 function bra_Account_Put(\brAWebServer\brAWebServer $app)
 {
     // Obtém os dados da requisição do put.
-    $username = $app->request()->put('username');
-    $userpass = $app->request()->put('userpass');
-    $sex = $app->request()->put('sex');
-    $email = $app->request()->put('email');
+    $request = $app->getRequestFields(array('username', 'userpass', 'sex', 'email'));
     
-    // Verifica se algum dado foi retornado de forma incorreta.
-    if(is_null($username) or is_null($username) or is_null($sex) or is_null($email))
-    {
-        $app->halt(400, 'Nem todos os parametros para criação de conta foram recebidos.');
-    }
-    // Testa se a conta foi criada com sucesso.
-    else if(($obj = $app->createAccount($username, $userpass, $sex, $email)) === false)
+    if(($obj = $app->createAccount($request->username, $request->userpass, $request->sex, $request->email)) === false)
     {
         $app->halt(400, 'Não foi possivel criar o nome de usuário. Verifique os parametros enviados.');
     }
     else
     {
-        echo $app->returnString(json_encode($obj));
+        $app->halt(200, json_encode($obj));
     }
 }
 ?>

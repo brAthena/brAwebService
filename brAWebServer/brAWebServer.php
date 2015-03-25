@@ -105,6 +105,7 @@ namespace brAWebServer
                         // Remove a criptografia dos dados enviados.
                         $app->environment['slim.input'] = openssl_decrypt($app->environment['slim.input'],
                             $app->apiKeyInfo->ApiPassMethod, $app->getClientKey(), 0, '0000000000000000');
+                        unset($app->environment['slim.request.form_hash']); // Deleta o hash inicial.
                     }
                 }
             });
@@ -211,7 +212,7 @@ namespace brAWebServer
                 $field_ = $this->request()->post($field);
                 if(is_null($field_) === true)
                 {
-                    $this->halt(400, $msgNull);
+                    $this->halt(400, $msgNull. ' ('.implode(', ', $fields).')');
                     return null;
                 }
                 $array2obj[$field] = $field_;
@@ -230,9 +231,9 @@ namespace brAWebServer
         public function changeSex($account_id, $sex)
         {
             // Obtém as validações regex para este método.
-            $createAccountValidation = $this->simpleXmlHnd->createAccountValidation;
+            $accountValidation = $this->simpleXmlHnd->accountValidation;
 
-            if(!preg_match("/{$createAccountValidation->sex}/i", $old_email))
+            if(!preg_match("/{$accountValidation->sex}/i", $old_email))
                 $this->halt(400, 'Sexo de conta em formato incorreto!');
 
             $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
@@ -249,12 +250,14 @@ namespace brAWebServer
                 SET
                     sex = :sex
                 WHERE
-                    account_id = :account_id
+                    account_id = :account_id AND
+                    group_id <= :max_group_id
             ");
             $stmt->execute(array(
                 ':new_email' => $new_email,
                 ':account_id' => $account_id,
-                ':old_email' => $old_email
+                ':old_email' => $old_email,
+                ':max_group_id' => $this->simpleXmlHnd->maxGroupId
             ));
 
             $bChanged = $stmt->rowCount() > 0;
@@ -276,11 +279,11 @@ namespace brAWebServer
         public function changeMail($account_id, $old_email, $new_email)
         {
             // Obtém as validações regex para este método.
-            $createAccountValidation = $this->simpleXmlHnd->createAccountValidation;
+            $accountValidation = $this->simpleXmlHnd->accountValidation;
 
-            if(!preg_match("/{$createAccountValidation->email}/i", $old_email))
+            if(!preg_match("/{$accountValidation->email}/i", $old_email))
                 $this->halt(400, 'Endereço de email em formato inválido!');
-            else if(!preg_match("/{$createAccountValidation->email}/i", $new_email))
+            else if(!preg_match("/{$accountValidation->email}/i", $new_email))
                 $this->halt(400, 'Endereço de email em formato inválido!');
             else if($old_email == $new_email)
                 return false;
@@ -300,12 +303,14 @@ namespace brAWebServer
                     email = :new_email
                 WHERE
                     account_id = :account_id AND
-                    email = :old_email
+                    email = :old_email AND
+                    group_id <= :max_group_id
             ");
             $stmt->execute(array(
                 ':new_email' => $new_email,
                 ':account_id' => $account_id,
-                ':old_email' => $old_email
+                ':old_email' => $old_email,
+                ':max_group_id' => $this->simpleXmlHnd->maxGroupId
             ));
 
             $bChanged = $stmt->rowCount() > 0;
@@ -325,11 +330,11 @@ namespace brAWebServer
         public function changePass($account_id, $old_userpass, $new_userpass)
         {
             // Obtém as validações regex para este método.
-            $createAccountValidation = $this->simpleXmlHnd->createAccountValidation;
+            $accountValidation = $this->simpleXmlHnd->accountValidation;
 
-            if(!preg_match("/{$createAccountValidation->userpass}/i", $old_userpass))
+            if(!preg_match("/{$accountValidation->userpass}/i", $old_userpass))
                 $this->halt(400, 'Senhas de usuário em formato inválido!');
-            else if(!preg_match("/{$createAccountValidation->userpass}/i", $new_userpass))
+            else if(!preg_match("/{$accountValidation->userpass}/i", $new_userpass))
                 $this->halt(400, 'Senhas de usuário em formato inválido!');
             else if($old_userpass == $new_userpass)
                 return false;
@@ -349,11 +354,13 @@ namespace brAWebServer
                     user_pass = :new_userpass
                 WHERE
                     account_id = :account_id AND
-                    user_pass = :old_userpass");
+                    user_pass = :old_userpass AND
+                    group_id <= :max_group_id");
             $stmt->execute(array(
                 ':new_userpass' => $new_userpass,
                 ':account_id' => $account_id,
-                ':old_userpass' => $old_userpass
+                ':old_userpass' => $old_userpass,
+                ':max_group_id' => $this->simpleXmlHnd->maxGroupId
             ));
 
             $bChanged = $stmt->rowCount() > 0;
@@ -374,12 +381,12 @@ namespace brAWebServer
         public function login($username, $userpass)
         {
             // Obtém as validações regex para este método.
-            $createAccountValidation = $this->simpleXmlHnd->createAccountValidation;
+            $accountValidation = $this->simpleXmlHnd->accountValidation;
 
             // Verifica se todos os dados recebidos estão dentro dos regex.
-            if(!preg_match("/{$createAccountValidation->username}/i", $username))
+            if(!preg_match("/{$accountValidation->username}/i", $username))
                 $this->halt(400, 'Nome de usuário em formato inválido!');
-            else if(!preg_match("/{$createAccountValidation->userpass}/i", $userpass))
+            else if(!preg_match("/{$accountValidation->userpass}/i", $userpass))
                 $this->halt(400, 'Senha de usuário em formato inválido!');
 
             $account_id = -1;
@@ -392,10 +399,11 @@ namespace brAWebServer
                 ));
 
             // Executa a consulta no banco de dados.
-            $stmt = $this->pdoRagna->prepare("SELECT account_id, userid FROM login WHERE userid = :userid AND user_pass = :user_pass");
+            $stmt = $this->pdoRagna->prepare("SELECT account_id, userid FROM login WHERE userid = :userid AND user_pass = :user_pass and group_id <= :max_group_id");
             $stmt->execute(array(
                 ':userid' => $username,
-                ':user_pass' => $userpass
+                ':user_pass' => $userpass,
+                ':max_group_id' => $this->simpleXmlHnd->maxGroupId
             ));
             // Retorna os dados para verificação.
             $obj = $stmt->fetchObject();
@@ -433,16 +441,16 @@ namespace brAWebServer
         public function createAccount($username, $userpass, $sex, $email)
         {
             // Obtém as validações regex para este método.
-            $createAccountValidation = $this->simpleXmlHnd->createAccountValidation;
+            $accountValidation = $this->simpleXmlHnd->accountValidation;
 
             // Verifica se todos os dados recebidos estão dentro dos regex.
-            if(!preg_match("/{$createAccountValidation->username}/i", $username))
+            if(!preg_match("/{$accountValidation->username}/i", $username))
                 $this->halt(400, 'Nome de usuário em formato inválido!');
-            else if(!preg_match("/{$createAccountValidation->userpass}/i", $userpass))
+            else if(!preg_match("/{$accountValidation->userpass}/i", $userpass))
                 $this->halt(400, 'Senha de usuário em formato inválido!');
-            else if(!preg_match("/{$createAccountValidation->sex}/i", $sex))
+            else if(!preg_match("/{$accountValidation->sex}/i", $sex))
                 $this->halt(400, 'Sexo para conta inválido! Aceitos: M ou F');
-            else if(!preg_match("/{$createAccountValidation->email}/i", $email))
+            else if(!preg_match("/{$accountValidation->email}/i", $email))
                 $this->halt(400, 'Email de usuário em formato inválido');
 
             $account_id = -1;

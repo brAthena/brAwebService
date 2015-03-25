@@ -22,9 +22,20 @@
  *
  * @param \brAWebServer\brAWebServer $app
  */
-function bra_CharList_Get(\brAWebServer\brAWebServer $app)
+function bra_CharList_Post(\brAWebServer\brAWebServer $app)
 {
-    $app->halt(503, 'Em manutenção. Tente mais tarde.');
+    // Obtém os dados da requisição POST.
+    $request = $app->getRequestFields(array('username', 'userpass'));
+
+    if(($obj = $app->login($request->username, $request->userpass)) === false)
+    {
+        $app->halt(401, 'Nome de usuário/senha inválidos.');
+    }
+    else
+    {
+        $charList = $app->charList($obj->account_id);
+        $app->halt(200, json_encode($charList));
+    }
 }
 
 /**
@@ -63,7 +74,7 @@ function bra_AccountChangeSex_Post(\brAWebServer\brAWebServer $app)
     }
     else if($app->changeSex($obj->account_id, $request->sex) === false)
     {
-        $app->halt(401, 'Ocorreu um erro durante do sexo.');
+        $app->halt(401, 'Ocorreu um erro durante a alteração do sexo.');
     }
     else
     {

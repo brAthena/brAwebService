@@ -156,12 +156,12 @@ namespace brAWebServer
             });
             
             // Adiciona método para GET de listagem de personagens.
-            $this->get('/account/chars/', function() use ($app) {
+            $this->post('/account/chars/', function() use ($app) {
                 if(($app->apiKeyInfo->ApiPermission&'01000100000000000000') <> '01000100000000000000')
                 {
                     $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
                 }
-                bra_CharList_Get($app);
+                bra_CharList_Post($app);
             });
             
             // Adiciona método para POST de alteração de posição.
@@ -220,6 +220,56 @@ namespace brAWebServer
             return (object)$array2obj;
         }
 
+        /**
+         * Obtém a lista de personagens para a conta solicitada.
+         *
+         * @param integer $account_id
+         *
+         * @return array
+         */
+        public function charList($account_id)
+        {
+            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
+            
+            // Abre conexão com o mysql do ragnarok.
+            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
+                $pdoRagna->user, $pdoRagna->pass, array(
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+                ));
+            
+            $aChars = array();
+            $stmt = $this->pdoRagna->prepare("
+                SELECT
+                    account_id,
+                    char_id,
+                    name,
+                    char_num,
+                    class,
+                    base_level,
+                    job_level,
+                    last_map,
+                    last_x,
+                    last_y,
+                    save_map,
+                    save_x,
+                    save_y,
+                    online
+                FROM
+                    `char`
+                WHERE
+                    account_id = :account_id
+                ORDER BY
+                    char_num ASC
+            ");
+            $stmt->execute(array(
+                ':account_id' => $account_id
+            ));
+            
+            $aChars = $stmt->fetchAll(\PDO::FETCH_OBJ);
+            $this->pdoRagna = null;
+            return $aChars;
+        }
+        
         /**
          * Realiza alteração de sexo da conta do usuário.
          *

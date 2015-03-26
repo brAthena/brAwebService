@@ -629,7 +629,7 @@ namespace brAWebServer
             // Retorna o objeto de conta.
             return (object)array(
                 'account_id' => $account_id, // Código da conta criada
-                'userid' => $username,       // Nome de usuário criado
+                'username' => $username,       // Nome de usuário criado
                 'create_time' => time()      // Segundos desde 01/01/1970 até hora de retorno.
             );
         }

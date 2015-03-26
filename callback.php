@@ -34,7 +34,7 @@ function bra_CharList_Post(\brAWebServer\brAWebServer $app)
     else
     {
         $charList = $app->charList($obj->account_id);
-        $app->halt(200, json_encode($charList));
+        $app->halt(200, json_encode((object)array('chars' => $charList)));
     }
 }
 

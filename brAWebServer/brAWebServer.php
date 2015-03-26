@@ -329,7 +329,7 @@ namespace brAWebServer
                     char_id,
                     name,
                     char_num,
-                    class,
+                    class as class_,
                     base_level,
                     job_level,
                     last_map,

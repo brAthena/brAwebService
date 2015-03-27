@@ -70,11 +70,6 @@ namespace brAWebServer
             // Iguala para poder usar dentro das funções. $this nao pode ser enviado.
             $app = $this;
 
-            // Default environment
-            $this->container->singleton('environment', function ($c) use ($app) {
-                return brAEnvironment::_getInstance($app);
-            });
-
             $this->add(new \Slim\Middleware\ContentTypes());
             
             // Executa as operações para verificação do apiKey ao banco de dados.

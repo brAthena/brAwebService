@@ -187,38 +187,12 @@ namespace brAWebServer
          */
         public function charResetAppear($account_id, $char_id)
         {
-            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
-            
-            // Abre conexão com o mysql do ragnarok.
-            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
-                $pdoRagna->user, $pdoRagna->pass, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
-
-            $stmt = $this->pdoRagna->prepare("
-                UPDATE
-                    `char`
-                SET
-                    hair = 0,
-                    hair_color = 0,
-                    clothes_color = 0,
-                    head_top = 0,
-                    head_mid = 0,
-                    head_bottom = 0
-                WHERE
-                    account_id = :account_id AND
-                    char_id = :char_id AND
-                    online = 0
-            ");
-            $stmt->execute(array(
+            $params = array(
                 ':account_id' => $account_id,
                 ':char_id' => $char_id
-            ));
+            );
 
-            $bAparenciaResetada = $stmt->rowCount() > 0;
-
-            $this->pdoRagna = null;
-            return $bAparenciaResetada;
+            return $this->querySql($this->getPdoRagna(), QUERY_UPDATE_CHAR_APPEAR, $params, true) > 0;
         }
 
         /**
@@ -231,35 +205,12 @@ namespace brAWebServer
          */
         public function charResetPosit($account_id, $char_id)
         {
-            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
-            
-            // Abre conexão com o mysql do ragnarok.
-            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
-                $pdoRagna->user, $pdoRagna->pass, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
-
-            $stmt = $this->pdoRagna->prepare("
-                UPDATE
-                    `char`
-                SET
-                    last_map = save_map,
-                    last_x = save_x,
-                    last_y = save_y
-                WHERE
-                    account_id = :account_id AND
-                    char_id = :char_id AND
-                    online = 0
-            ");
-            $stmt->execute(array(
+            $params = array(
                 ':account_id' => $account_id,
                 ':char_id' => $char_id
-            ));
-
-            $bPosicaoResetada = $stmt->rowCount() > 0;
-
-            $this->pdoRagna = null;
-            return $bPosicaoResetada;
+            );
+            
+            return $this->querySql($this->getPdoRagna(), QUERY_UPDATE_CHAR_POSITION, $params, true) > 0;
         }
 
         /**
@@ -271,45 +222,14 @@ namespace brAWebServer
          */
         public function charList($account_id)
         {
-            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
-            
-            // Abre conexão com o mysql do ragnarok.
-            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
-                $pdoRagna->user, $pdoRagna->pass, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
-            
-            $aChars = array();
-            $stmt = $this->pdoRagna->prepare("
-                SELECT
-                    account_id,
-                    char_id,
-                    name,
-                    char_num,
-                    class as class_,
-                    base_level,
-                    job_level,
-                    last_map,
-                    last_x,
-                    last_y,
-                    save_map,
-                    save_x,
-                    save_y,
-                    online
-                FROM
-                    `char`
-                WHERE
-                    account_id = :account_id
-                ORDER BY
-                    char_num ASC
-            ");
-            $stmt->execute(array(
+            $params = array(
                 ':account_id' => $account_id
-            ));
+            );
             
-            $aChars = $stmt->fetchAll(\PDO::FETCH_OBJ);
-            $this->pdoRagna = null;
-            return $aChars;
+            $list = $this->querySql($this->getPdoRagna(), QUERY_SELECT_CHAR_LIST, $params);
+            if(!is_array($list)) $list = array($list);
+            
+            return $list;
         }
         
         /**
@@ -328,34 +248,13 @@ namespace brAWebServer
             if(!preg_match("/{$accountValidation->sex}/i", $sex))
                 $this->sendResponse(400, 'Sexo de conta em formato incorreto!');
 
-            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
-            
-            // Abre conexão com o mysql do ragnarok.
-            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
-                $pdoRagna->user, $pdoRagna->pass, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
-
-            $stmt = $this->pdoRagna->prepare("
-                UPDATE
-                    login
-                SET
-                    sex = :sex
-                WHERE
-                    account_id = :account_id AND
-                    group_id <= :max_group_id
-            ");
-            $stmt->execute(array(
+            $params = array(
                 ':account_id' => $account_id,
                 ':sex' => $sex,
                 ':max_group_id' => $this->simpleXmlHnd->maxGroupId
-            ));
+            );
 
-            $bChanged = $stmt->rowCount() > 0;
-
-            $this->pdoRagna = null;
-
-            return $bChanged;
+            return $this->querySql($this->getPdoRagna(), QUERY_UPDATE_ACC_SEX, $params, true) > 0;
         }
         
         /**
@@ -379,36 +278,14 @@ namespace brAWebServer
             else if($old_email == $new_email)
                 return false;
 
-            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
-            
-            // Abre conexão com o mysql do ragnarok.
-            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
-                $pdoRagna->user, $pdoRagna->pass, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
-
-            $stmt = $this->pdoRagna->prepare("
-                UPDATE
-                    login
-                SET
-                    email = :new_email
-                WHERE
-                    account_id = :account_id AND
-                    email = :old_email AND
-                    group_id <= :max_group_id
-            ");
-            $stmt->execute(array(
-                ':new_email' => $new_email,
+            $params = array(
                 ':account_id' => $account_id,
-                ':old_email' => $old_email,
-                ':max_group_id' => $this->simpleXmlHnd->maxGroupId
-            ));
+                ':max_group_id' => $this->simpleXmlHnd->maxGroupId,
+                ':new_email' => $new_email,
+                ':old_email' => $old_email
+            );
 
-            $bChanged = $stmt->rowCount() > 0;
-
-            $this->pdoRagna = null;
-
-            return $bChanged;
+            return $this->querySql($this->getPdoRagna(), QUERY_UPDATE_ACC_MAIL, $params, true) > 0;
         }
         
         /**
@@ -430,35 +307,14 @@ namespace brAWebServer
             else if($old_userpass == $new_userpass)
                 return false;
 
-            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
-            
-            // Abre conexão com o mysql do ragnarok.
-            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
-                $pdoRagna->user, $pdoRagna->pass, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
-
-            $stmt = $this->pdoRagna->prepare("
-                UPDATE
-                    login
-                SET
-                    user_pass = :new_userpass
-                WHERE
-                    account_id = :account_id AND
-                    user_pass = :old_userpass AND
-                    group_id <= :max_group_id");
-            $stmt->execute(array(
+            $params = array(
                 ':new_userpass' => $new_userpass,
                 ':account_id' => $account_id,
                 ':old_userpass' => $old_userpass,
                 ':max_group_id' => $this->simpleXmlHnd->maxGroupId
-            ));
+            );
 
-            $bChanged = $stmt->rowCount() > 0;
-
-            $this->pdoRagna = null;
-
-            return $bChanged;
+            return $this->querySql($this->getPdoRagna(), QUERY_UPDATE_ACC_PASSWORD, $params, true) > 0;
         }
 
         /**
@@ -525,43 +381,32 @@ namespace brAWebServer
                 $this->sendResponse(400, 'Email de usuário em formato inválido');
 
             $account_id = -1;
-            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
-            
-            // Abre conexão com o mysql do ragnarok.
-            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
-                $pdoRagna->user, $pdoRagna->pass, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
 
-            // Query para verificar se o nome de usuário existe.
-            // Chave no banco de dados não está unique!!! Por isso é necessário a verificação.
-            $stmt = $this->pdoRagna->prepare("SELECT account_id FROM login WHERE userid = :userid");
-            $stmt->execute(array(
+            $params = array(
                 ':userid' => $username
-            ));
-            $objAccount = $stmt->fetchObject();
+            );
             
-            // Já existe a conta no banco de dados pois retornou alguma coisa.
-            if($objAccount !== false)
+            // Verifica se a conta solicitada já existe no banco de dados. A Chave unique não está declarada, então
+            // Necessárior realizar a verificação.
+            if($this->querySql($this->getPdoRagna(), QUERY_SELECT_ACC_CHECK, $params) !== false)
             {
-                $this->sendResponse(401, 'Nome de usuário já cadastrado.');
+                // Retorna falso pois por questões de segurança não informar que nome de usuário
+                // já existe.
+                return false;
             }
             
-            // Prepara a query a ser executada para inserir o usuário no banco de dados.
-            // rAthena@8d47306
-            $stmt = $this->pdoRagna->prepare("INSERT INTO login (userid, user_pass, sex, email) VALUES (:userid, :user_pass, :sex, :email);");
-            $stmt->execute(array(
+            $params = array(
                 ':userid' => $username,
                 ':user_pass' => $userpass,
                 ':sex' => $sex,
                 ':email' => $email
-            ));
+            );
             
-            // Obtém o ultimo account_id lançado na tabela de login.
-            $account_id = $this->pdoRagna->lastInsertId();
-
-            // Fecha a conexão com o servidor do ragnarok.
-            $this->pdoRagna = null;
+            // Verifica se a conta não foi criada. Retorna falso pois não foi possivel criar a conta.
+            if($this->querySql($this->getPdoRagna(), QUERY_INSERT_ACC_NEW, $params, true, $account_id) == 0)
+            {
+                return false;
+            }
 
             // Retorna o objeto de conta.
             return (object)array(

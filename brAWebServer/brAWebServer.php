@@ -98,8 +98,8 @@ namespace brAWebServer
                     else
                     {
                         // Remove a criptografia dos dados enviados.
-                        $app->environment['slim.input'] = openssl_decrypt($app->environment['slim.input'],
-                            $app->apiKeyInfo->ApiPassMethod, $app->getClientKey(), 0, '0000000000000000');
+                        $app->environment['slim.input'] = $app->apiDecrypt($app->environment['slim.input']);
+
                         unset($app->environment['slim.request.form_hash']); // Deleta o hash inicial.
                     }
                 }
@@ -480,43 +480,23 @@ namespace brAWebServer
             else if(!preg_match("/{$accountValidation->userpass}/i", $userpass))
                 $this->sendResponse(400, 'Senha de usuário em formato inválido!');
 
-            $account_id = -1;
-            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
-            
-            // Abre conexão com o mysql do ragnarok.
-            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
-                $pdoRagna->user, $pdoRagna->pass, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
-
-            // Executa a consulta no banco de dados.
-            $stmt = $this->pdoRagna->prepare("SELECT account_id, userid FROM login WHERE userid = :userid AND user_pass = :user_pass and group_id <= :max_group_id");
-            $stmt->execute(array(
-                ':userid' => $username,
-                ':user_pass' => $userpass,
-                ':max_group_id' => $this->simpleXmlHnd->maxGroupId
-            ));
-            // Retorna os dados para verificação.
-            $obj = $stmt->fetchObject();
-
-            // Não encontrou o nome de usuário.
-            if($obj === false)
-            {
-                return false;
-            }
-
-            // Obtém os dados da conta logada.
-            $account_id = $obj->account_id;
-            $username = $obj->userid;
-
-            // Fecha a conexão com o servidor do ragnarok.
-            $this->pdoRagna = null;
-
-            return (object)array(
-                'account_id' => $account_id,
-                'username' => $username,
-                'loginTime' => time()
+            $params = array(
+                    ':userid' => $username,
+                    ':user_pass' => $userpass,
+                    ':max_group_id' => $this->simpleXmlHnd->maxGroupId
             );
+
+            // Testa a query e tenta executar a query para realizar login.
+            if(($obj = $this->querySql($this->getPdoRagna(), QUERY_SELECT_ACC_LOGIN, $params)) !== false)
+            {
+                $obj = (object)array(
+                    'account_id' => $obj->account_id,
+                    'username' => $obj->userid,
+                    'loginTime' => time()
+                );
+            }
+            
+            return $obj;
         }
 
         /**
@@ -600,47 +580,71 @@ namespace brAWebServer
          */
         public function checkApiKey($apiKey)
         {
-            $bExists = false;
-            
-            $this->pdoServer = new \PDO($this->simpleXmlHnd->PdoServerConnection->{'@attributes'}->connectionString,
-                NULL, NULL, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
-            $stmt = $this->pdoServer->prepare('
-                UPDATE
-                    brawbkeys
-                SET
-                    ApiUsedCount = ApiUsedCount + 1
-                WHERE
-                    ApiKey = :ApiKey
-                        AND
-                    (ApiUnlimitedCount = 1
-                        or (ApiUsedCount < ApiLimitCount AND date() <= ApiExpires))
-            ');
-            $stmt->execute(array(
-                ':ApiKey' => $apiKey
-            ));
+            // Query para verificar se o apikey existe.
+            $bExists = $this->querySql($this->getPdoServer(), QUERY_UPDATE_APIKEY_COUNT, array(':ApiKey' => $apiKey), true) > 0;
 
-            // Se a chave existir, então carregará em memória os dados para criptografia da mesma.
-            if(($bExists = ($stmt->rowCount() > 0)) === true)
+            // Caso exista, obtem os dados para leitura interna.
+            if($bExists === true)
+                $this->apiKeyInfo = $this->querySql($this->getPdoServer(), QUERY_SELECT_APIKEY_DATA,array(':ApiKey' => $apiKey));
+
+            return $bExists;
+        }
+        
+        /**
+         * Obtém os dados de conexão para o servidor local.
+         * @return object
+         */
+        private function getPdoServer()
+        {
+            return $this->simpleXmlHnd->PdoServerConnection->{'@attributes'};
+        }
+
+        /**
+         * Obtém os dados de conexão para o servidor ragnarok.
+         * @return object
+         */
+        private function getPdoRagna()
+        {
+            return $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
+        }
+        
+        /**
+         * Executa uma query no banco de dados.
+         *
+         * @param object $conf Configuração a ser utilizada para execução da query.
+         * @param string $query Query a ser executada no banco.
+         * @param array $params Parametros a serem passados a query.
+         * @param boolean $returnRowCount Se verdadeiro retorna o número de linhas executadas.
+         * @param int* $last_id Caso definido, retorna o ultimo id no banco de dados.
+         *
+         * @return mixed
+         */
+        private function querySql($conf, $query, $params = array(), $returnRowCount = false, &$last_id = null)
+        {
+            $objReturn = null;
+            $pdo = new \PDO($conf->connectionString, $conf->user, $conf->pass, array(
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+            ));
+            
+            $stmt = $pdo->prepare($query);
+            $stmt->execute($params);
+            
+            // Caso
+            if($returnRowCount === true)
             {
-                $stmt = $this->pdoServer->prepare('
-                    SELECT
-                        *
-                    FROM
-                        brawbkeys
-                    WHERE
-                        ApiKey = :ApiKey
-                ');
-                $stmt->execute(array(
-                    ':ApiKey' => $apiKey
-                ));
-                // Obtém os dados e joga num atributo da classe.
-                $this->apiKeyInfo = $stmt->fetchObject();
+                $last_id = $pdo->lastInsertId();
+                $objReturn = $stmt->rowCount();
+            }
+            else
+            {
+                $tmp = $stmt->fetchAll(\PDO::FETCH_OBJ);
+                $objReturn = ((sizeof($tmp) == 0) ? false:
+                                ((sizeof($tmp) == 1) ? $tmp[0]:$tmp));
+                unset($tmp);
             }
 
-            $this->pdoServer = null;
-            return $bExists;
+            $pdo = null;
+            return $objReturn;
         }
 
         /**
@@ -676,10 +680,33 @@ namespace brAWebServer
          */
         public function returnString($str)
         {
-            return (($this->apiKeyInfo != null) ?
-                openssl_encrypt($str, $this->apiKeyInfo->ApiPassMethod, $this->getClientKey(), 0, '0000000000000000'):
-                    $str);
+            return ((is_null($this->apiKeyInfo) === true) ? $str:$this->apiEncrypt($str));
         }
+
+        /**
+         * Método utilizado para criptografar dados enviados pelo client.
+         *
+         * @param string $str String criptografada.
+         *
+         * @return string
+         */
+        public function apiEncrypt($str)
+        {
+            return openssl_encrypt($str, $this->apiKeyInfo->ApiPassMethod, $this->getClientKey(), 0, '0000000000000000');
+        }
+
+        /**
+         * Método utilizado para decriptografar dados enviados pelo client.
+         *
+         * @param string $str String criptografada.
+         *
+         * @return string
+         */
+        public function apiDecrypt($str)
+        {
+            return openssl_decrypt($str, $this->apiKeyInfo->ApiPassMethod, $this->getClientKey(), 0, '0000000000000000');
+        }
+
     } // fim - class brAWebServer extends \Slim\Slim
 } // fim - namespace brAWebServer
 ?>

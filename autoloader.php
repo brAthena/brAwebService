@@ -17,6 +17,7 @@
  * License along with this library.
  */
 
+require_once(dirname(__FILE__).'/query.php');
 require_once(dirname(__FILE__).'/callback.php');
 require_once(dirname(__FILE__).'/Slim/Slim.php');
 

@@ -79,7 +79,7 @@ namespace brAWebServer
                 // Caso esteja em modo manutenção, não permite que a requisição seja continuada.
                 if($app->simpleXmlHnd->maintence === true)
                 {
-                    $app->halt(503, 'Em manutenção. Tente mais tarde.');
+                    $app->sendResponse(503, 'Em manutenção. Tente mais tarde.');
                 }
                 else
                 {
@@ -89,11 +89,11 @@ namespace brAWebServer
                     // Se token não foi enviado para a aplicação.
                     if(is_null($apiKey) === true)
                     {
-                        $app->halt(400, 'Acesso negado. ApiKey de acesso não fornecido.');
+                        $app->sendResponse(400, 'Acesso negado. ApiKey de acesso não fornecido.');
                     }
                     else if($app->checkApiKey($apiKey) === false)
                     { // ApiKey inválido.
-                        $app->halt(401, 'Acesso negado. ApiKey inválida! Verifique por favor.');
+                        $app->sendResponse(401, 'Acesso negado. ApiKey inválida! Verifique por favor.');
                     }
                     else
                     {
@@ -109,7 +109,7 @@ namespace brAWebServer
             $this->registerRoute('put',     '/account/',                        'bra_Account_Put',              '10000000000000000000');
             $this->registerRoute('post',    '/account/login/',                  'bra_AccountLogin_Post',        '01000000000000000000');
             $this->registerRoute('post',    '/account/password/',               'bra_AccountChangePass_Post',   '01100000000000000000');
-            $this->registerRoute('post',    '/account/email/',                  'bra_AccountChangePass_Post',   '01100000000000000000');
+            $this->registerRoute('post',    '/account/email/',                  'bra_AccountChangeMail_Post',   '01010000000000000000');
             $this->registerRoute('post',    '/account/sex/',                    'bra_AccountChangeSex_Post',    '01001000000000000000');
             $this->registerRoute('post',    '/account/chars/',                  'bra_CharList_Post',            '01000100000000000000');
             $this->registerRoute('post',    '/account/chars/reset/posit/',      'bra_CharResetPosit_Post',      '01000010000000000000');
@@ -133,10 +133,11 @@ namespace brAWebServer
             $this->{$method}($route, function() use ($app, $callback, $permission){
                 if(($app->apiKeyInfo->ApiPermission&$permission) <> $permission)
                 {
-                    $app->halt(401, 'Esta ApiKey não pode realizar este tipo de operação.');
+                    $app->sendResponse(401, 'Esta ApiKey não pode realizar este tipo de operação.');
                 }
                 $callback($app);
             });
+            return;
         }
 
         /**
@@ -154,24 +155,25 @@ namespace brAWebServer
          * Obtém os campos que serão utilizados para uma requisição. Caso algum parametro não seja recebido,
          *  então retorna 400 com a mensagem de erro.
          *
-         * @param array $fields Campos a serem lidos.
-         * @param string $msgNull Mensagem para retorno.
+         * @param ... Recebe os itens que serão verificados.
          *
          * @return object
          */
-        public function getRequestFields(array $fields, $msgNull = 'Parametros solicitados não foram enviados.')
+        public function getRequestFields()
         {
             $array2obj = array();
-            foreach($fields as $field)
+
+            foreach(func_get_args() as $field)
             {
                 $field_ = $this->request()->post($field);
                 if(is_null($field_) === true)
                 {
-                    $this->halt(400, $msgNull. ' ('.implode(', ', $fields).')');
+                    $this->sendResponse(400, $msgNull. ' ('.implode(', ', func_get_args()).')');
                     return null;
                 }
                 $array2obj[$field] = $field_;
             }
+            
             return (object)$array2obj;
         }
 
@@ -324,7 +326,7 @@ namespace brAWebServer
             $accountValidation = $this->simpleXmlHnd->accountValidation;
 
             if(!preg_match("/{$accountValidation->sex}/i", $sex))
-                $this->halt(400, 'Sexo de conta em formato incorreto!');
+                $this->sendResponse(400, 'Sexo de conta em formato incorreto!');
 
             $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
             
@@ -371,9 +373,9 @@ namespace brAWebServer
             $accountValidation = $this->simpleXmlHnd->accountValidation;
 
             if(!preg_match("/{$accountValidation->email}/i", $old_email))
-                $this->halt(400, 'Endereço de email em formato inválido!');
+                $this->sendResponse(400, 'Endereço de email em formato inválido!');
             else if(!preg_match("/{$accountValidation->email}/i", $new_email))
-                $this->halt(400, 'Endereço de email em formato inválido!');
+                $this->sendResponse(400, 'Endereço de email em formato inválido!');
             else if($old_email == $new_email)
                 return false;
 
@@ -422,9 +424,9 @@ namespace brAWebServer
             $accountValidation = $this->simpleXmlHnd->accountValidation;
 
             if(!preg_match("/{$accountValidation->userpass}/i", $old_userpass))
-                $this->halt(400, 'Senhas de usuário em formato inválido!');
+                $this->sendResponse(400, 'Senhas de usuário em formato inválido!');
             else if(!preg_match("/{$accountValidation->userpass}/i", $new_userpass))
-                $this->halt(400, 'Senhas de usuário em formato inválido!');
+                $this->sendResponse(400, 'Senhas de usuário em formato inválido!');
             else if($old_userpass == $new_userpass)
                 return false;
 
@@ -474,9 +476,9 @@ namespace brAWebServer
 
             // Verifica se todos os dados recebidos estão dentro dos regex.
             if(!preg_match("/{$accountValidation->username}/i", $username))
-                $this->halt(400, 'Nome de usuário em formato inválido!');
+                $this->sendResponse(400, 'Nome de usuário em formato inválido!');
             else if(!preg_match("/{$accountValidation->userpass}/i", $userpass))
-                $this->halt(400, 'Senha de usuário em formato inválido!');
+                $this->sendResponse(400, 'Senha de usuário em formato inválido!');
 
             $account_id = -1;
             $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
@@ -534,13 +536,13 @@ namespace brAWebServer
 
             // Verifica se todos os dados recebidos estão dentro dos regex.
             if(!preg_match("/{$accountValidation->username}/i", $username))
-                $this->halt(400, 'Nome de usuário em formato inválido!');
+                $this->sendResponse(400, 'Nome de usuário em formato inválido!');
             else if(!preg_match("/{$accountValidation->userpass}/i", $userpass))
-                $this->halt(400, 'Senha de usuário em formato inválido!');
+                $this->sendResponse(400, 'Senha de usuário em formato inválido!');
             else if(!preg_match("/{$accountValidation->sex}/i", $sex))
-                $this->halt(400, 'Sexo para conta inválido! Aceitos: M ou F');
+                $this->sendResponse(400, 'Sexo para conta inválido! Aceitos: M ou F');
             else if(!preg_match("/{$accountValidation->email}/i", $email))
-                $this->halt(400, 'Email de usuário em formato inválido');
+                $this->sendResponse(400, 'Email de usuário em formato inválido');
 
             $account_id = -1;
             $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
@@ -562,7 +564,7 @@ namespace brAWebServer
             // Já existe a conta no banco de dados pois retornou alguma coisa.
             if($objAccount !== false)
             {
-                $this->halt(401, 'Nome de usuário já cadastrado.');
+                $this->sendResponse(401, 'Nome de usuário já cadastrado.');
             }
             
             // Prepara a query a ser executada para inserir o usuário no banco de dados.
@@ -640,21 +642,27 @@ namespace brAWebServer
             $this->pdoServer = null;
             return $bExists;
         }
-        
+
         /**
-         * Sobre-escrito para retornar uma mensagem de erro e hora da ocorrência do problema.
+         * Retorna a mensagem para que seja respondido nos conformes.
          *
-         * @see \Slim\Slim::halt()
+         * @param integer $status Código de resposta.
+         * @param string $message Mensagem de resposta.
+         * @param $object Objeto json de resposta.
          *
-         * @override
+         * @return void
          */
-        public function halt($status, $message = '')
+        public function sendResponse($status, $message, $object = -1)
         {
             $time = time();
-            parent::halt($status, $this->returnString(json_encode((object)array(
+            $object = json_encode($object);
+
+            $this->halt($status, $this->returnString(json_encode((object)array(
                 'code' => $status,
                 'message' => $message,
-                'messageHash' => hash('sha512', $message.$time),
+                'messageHash' => hash('sha512', $message . $time),
+                'object' => $object,
+                'objectHash' => hash('sha512', $object . $time),
                 'time' => $time
             ))));
         }

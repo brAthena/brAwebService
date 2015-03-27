@@ -25,16 +25,16 @@
 function bra_CharList_Post(\brAWebServer\brAWebServer $app)
 {
     // Obtém os dados da requisição POST.
-    $request = $app->getRequestFields(array('username', 'userpass'));
+    $request = $app->getRequestFields('username', 'userpass');
 
     if(($obj = $app->login($request->username, $request->userpass)) === false)
     {
-        $app->halt(401, 'Nome de usuário/senha inválidos.');
+        $app->sendResponse(401, 'Nome de usuário/senha inválidos.');
     }
     else
     {
         $charList = $app->charList($obj->account_id);
-        $app->halt(200, json_encode((object)array('chars' => $charList)));
+        $app->sendResponse(200, 'Personagens listados com sucesso.', (object)array('chars' => $charList));
     }
 }
 
@@ -46,23 +46,23 @@ function bra_CharList_Post(\brAWebServer\brAWebServer $app)
 function bra_CharResetAppear_Post(\brAWebServer\brAWebServer $app)
 {
     // Obtém os dados da requisição POST.
-    $request = $app->getRequestFields(array('username', 'userpass', 'char_id'));
+    $request = $app->getRequestFields('username', 'userpass', 'char_id');
 
     if(($obj = $app->login($request->username, $request->userpass)) === false)
     {
-        $app->halt(401, 'Nome de usuário/senha inválidos.');
+        $app->sendResponse(401, 'Nome de usuário/senha inválidos.');
     }
     else if($app->charResetAppear($obj->account_id, $request->char_id) === false)
     {
-        $app->halt(400, 'Impossivel resetar a aparência do personagem.');
+        $app->sendResponse(400, 'Impossivel resetar a aparência do personagem.');
     }
     else
     {
-        $app->halt(200, json_encode((object)array(
+        $app->sendResponse(200, 'Aparência resetada com sucesso.', (object)array(
             'account_id' => $obj->account_id,
             'char_id' => $request->char_id,
             'message' => 'Aparência resetada com sucesso.'
-        )));
+        ));
     }
 }
 
@@ -74,23 +74,23 @@ function bra_CharResetAppear_Post(\brAWebServer\brAWebServer $app)
 function bra_CharResetPosit_Post(\brAWebServer\brAWebServer $app)
 {
     // Obtém os dados da requisição POST.
-    $request = $app->getRequestFields(array('username', 'userpass', 'char_id'));
+    $request = $app->getRequestFields('username', 'userpass', 'char_id');
 
     if(($obj = $app->login($request->username, $request->userpass)) === false)
     {
-        $app->halt(401, 'Nome de usuário/senha inválidos.');
+        $app->sendResponse(401, 'Nome de usuário/senha inválidos.');
     }
     else if($app->charResetPosit($obj->account_id, $request->char_id) === false)
     {
-        $app->halt(400, 'Impossivel resetar a posição do personagem.');
+        $app->sendResponse(400, 'Impossivel resetar a posição do personagem.');
     }
     else
     {
-        $app->halt(200, json_encode((object)array(
+        $app->sendResponse(200, 'Posição resetada com sucesso.', (object)array(
             'account_id' => $obj->account_id,
             'char_id' => $request->char_id,
             'message' => 'Posição resetada com sucesso.'
-        )));
+        ));
     }
 }
 
@@ -102,23 +102,23 @@ function bra_CharResetPosit_Post(\brAWebServer\brAWebServer $app)
 function bra_AccountChangeSex_Post(\brAWebServer\brAWebServer $app)
 {
     // Obtém os dados da requisição POST.
-    $request = $app->getRequestFields(array('username', 'userpass', 'sex'));
+    $request = $app->getRequestFields('username', 'userpass', 'sex');
     
     if(($obj = $app->login($request->username, $request->userpass)) === false)
     {
-        $app->halt(401, 'Nome de usuário/senha inválidos.');
+        $app->sendResponse(401, 'Nome de usuário/senha inválidos.');
     }
     else if($app->changeSex($obj->account_id, $request->sex) === false)
     {
-        $app->halt(401, 'Ocorreu um erro durante a alteração do sexo.');
+        $app->sendResponse(401, 'Ocorreu um erro durante a alteração do sexo.');
     }
     else
     {
-        $app->halt(200, json_encode((object)array(
+        $app->sendResponse(200, 'Sexo alterado com sucesso.', (object)array(
             'account_id' => $obj->account_id,
             'message' => 'Sexo alterado com sucesso.',
             'time' => time()
-        )));
+        ));
     }
 }
 
@@ -130,23 +130,23 @@ function bra_AccountChangeSex_Post(\brAWebServer\brAWebServer $app)
 function bra_AccountChangeMail_Post(\brAWebServer\brAWebServer $app)
 {
     // Obtém os dados da requisição POST.
-    $request = $app->getRequestFields(array('username', 'userpass', 'new_email', 'old_email'));
+    $request = $app->getRequestFields('username', 'userpass', 'new_email', 'old_email');
     
     if(($obj = $app->login($request->username, $request->userpass)) === false)
     {
-        $app->halt(401, 'Nome de usuário/senha inválidos.');
+        $app->sendResponse(401, 'Nome de usuário/senha inválidos.');
     }
     else if($app->changeMail($obj->account_id, $request->new_email, $request->old_email))
     {
-        $app->halt(401, 'Ocorreu um erro durante a alteração de email.');
+        $app->sendResponse(401, 'Ocorreu um erro durante a alteração de email.');
     }
     else
     {
-        $app->halt(200, json_encode((object)array(
+        $app->sendResponse(200, 'Email alterado com sucesso.', (object)array(
             'account_id' => $obj->account_id,
             'message' => 'Email alterado com sucesso.',
             'time' => time()
-        )));
+        ));
     }
 }
 
@@ -158,23 +158,23 @@ function bra_AccountChangeMail_Post(\brAWebServer\brAWebServer $app)
 function bra_AccountChangePass_Post(\brAWebServer\brAWebServer $app)
 {
     // Obtém os dados da requisição POST.
-    $request = $app->getRequestFields(array('username', 'userpass', 'newpass'));
+    $request = $app->getRequestFields('username', 'userpass', 'newpass');
 
     if(($obj = $app->login($request->username, $request->userpass)) === false)
     {
-        $app->halt(401, 'Nome de usuário/senha inválidos.');
+        $app->sendResponse(401, 'Nome de usuário/senha inválidos.');
     }
     else if($app->changePass($obj->account_id, $request->userpass, $request->newpass) === false)
     {
-        $app->halt(401, 'Ocorreu um erro durante a alteração de senha.');
+        $app->sendResponse(401, 'Ocorreu um erro durante a alteração de senha.');
     }
     else
     {
-        $app->halt(200, json_encode((object)array(
+        $app->sendResponse(200, 'Senha alterada com sucesso.', (object)array(
             'account_id' => $obj->account_id,
             'message' => 'Senha alterada com sucesso.',
             'time' => time()
-        )));
+        ));
     }
 }
 
@@ -186,15 +186,15 @@ function bra_AccountChangePass_Post(\brAWebServer\brAWebServer $app)
 function bra_AccountLogin_Post(\brAWebServer\brAWebServer $app)
 {
     // Obtém os dados da requisição do POST.
-    $request = $app->getRequestFields(array('username', 'userpass'));
+    $request = $app->getRequestFields('username', 'userpass');
 
     if(($obj = $app->login($request->username, $request->userpass)) === false)
     {
-        $app->halt(401, 'Nome de usuário/senha inválidos.');
+        $app->sendResponse(401, 'Nome de usuário/senha inválidos.');
     }
     else
     {
-        $app->halt(200, json_encode($obj));
+        $app->sendResponse(200, 'Login realizado com sucesso.', $obj);
     }
 }
 
@@ -206,15 +206,15 @@ function bra_AccountLogin_Post(\brAWebServer\brAWebServer $app)
 function bra_Account_Put(\brAWebServer\brAWebServer $app)
 {
     // Obtém os dados da requisição do put.
-    $request = $app->getRequestFields(array('username', 'userpass', 'sex', 'email'));
+    $request = $app->getRequestFields('username', 'userpass', 'sex', 'email');
     
     if(($obj = $app->createAccount($request->username, $request->userpass, $request->sex, $request->email)) === false)
     {
-        $app->halt(400, 'Não foi possivel criar o nome de usuário. Verifique os parametros enviados.');
+        $app->sendResponse(400, 'Não foi possivel criar o nome de usuário. Verifique os parametros enviados.');
     }
     else
     {
-        $app->halt(200, json_encode($obj));
+        $app->sendResponse(200, 'Conta criada com sucesso.', $obj);
     }
 }
 ?>

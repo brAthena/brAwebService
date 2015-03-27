@@ -105,79 +105,39 @@ namespace brAWebServer
                 }
             });
 
-            // Adiciona o método para put de crição de contas.
-            $this->put('/account/', function() use ($app) {
-                if(($app->apiKeyInfo->ApiPermission&'10000000000000000000') <> '10000000000000000000')
-                {
-                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
-                }
-                bra_Account_Put($app);
-            });
-
-            // Adiciona método para POST de realizar login.
-            $this->post('/account/login/', function() use ($app) {
-                if(($app->apiKeyInfo->ApiPermission&'01000000000000000000') <> '01000000000000000000')
-                {
-                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
-                }
-                bra_AccountLogin_Post($app);
-            });
-            
-            // Adiciona método para POST de alteração de senha.
-            $this->post('/account/password/', function() use ($app) {
-                if(($app->apiKeyInfo->ApiPermission&'01100000000000000000') <> '01100000000000000000')
-                {
-                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
-                }
-                bra_AccountChangePass_Post($app);
-            });
-            
-            // Adiciona método para POST de alteração de email.
-            $this->post('/account/email/', function() use ($app) {
-                if(($app->apiKeyInfo->ApiPermission&'01010000000000000000') <> '01010000000000000000')
-                {
-                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
-                }
-                bra_AccountChangeMail_Post($app);
-            });
-            
-            // Adiciona método para POST de alteração de sexo.
-            $this->post('/account/sex/', function() use ($app) {
-                if(($app->apiKeyInfo->ApiPermission&'01001000000000000000') <> '01001000000000000000')
-                {
-                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
-                }
-                bra_AccountChangeSex_Post($app);
-            });
-            
-            // Adiciona método para GET de listagem de personagens.
-            $this->post('/account/chars/', function() use ($app) {
-                if(($app->apiKeyInfo->ApiPermission&'01000100000000000000') <> '01000100000000000000')
-                {
-                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
-                }
-                bra_CharList_Post($app);
-            });
-            
-            // Adiciona método para POST de alteração de posição.
-            $this->post('/account/chars/reset/posit/', function() use ($app) {
-                if(($app->apiKeyInfo->ApiPermission&'01000010000000000000') <> '01000010000000000000')
-                {
-                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
-                }
-                bra_CharResetPosit_Post($app);
-            });
-            
-            // Adiciona método para POST de alteração de posição.
-            $this->post('/account/chars/reset/appear/', function() use ($app) {
-                if(($app->apiKeyInfo->ApiPermission&'01000001000000000000') <> '01000001000000000000')
-                {
-                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
-                }
-                bra_CharResetAppear_Post($app);
-            });
+            // Adicionado método para registrar as rotas, callbacks e permissões de acesso. bra_Account_Put
+            $this->registerRoute('put',     '/account/',                        'bra_Account_Put',              '10000000000000000000');
+            $this->registerRoute('post',    '/account/login/',                  'bra_AccountLogin_Post',        '01000000000000000000');
+            $this->registerRoute('post',    '/account/password/',               'bra_AccountChangePass_Post',   '01100000000000000000');
+            $this->registerRoute('post',    '/account/email/',                  'bra_AccountChangePass_Post',   '01100000000000000000');
+            $this->registerRoute('post',    '/account/sex/',                    'bra_AccountChangeSex_Post',    '01001000000000000000');
+            $this->registerRoute('post',    '/account/chars/',                  'bra_CharList_Post',            '01000100000000000000');
+            $this->registerRoute('post',    '/account/chars/reset/posit/',      'bra_CharResetPosit_Post',      '01000010000000000000');
+            $this->registerRoute('post',    '/account/chars/reset/appear/',     'bra_CharResetAppear_Post',     '01000001000000000000');
 
         } // fim - public function __construct()
+
+        /**
+         * Registra uma chamada para um callback para uma rota dependente de method.
+         *
+         * @param string $method Método para definir a rota. (GET, POST, PUT, DELETE)
+         * @param string $route Método para a rota ser executada.
+         * @param string $permission Permissões da APIKEY para execução do action e method.
+         * @param callback $callback função a ser executada quando a rota for utilizada.
+         *
+         * @return void
+         */
+        public function registerRoute($method, $route, $callback, $permission)
+        {
+            $app = $this;
+            $this->{$method}($route, function() use ($app, $callback, $permission){
+                if(($app->apiKeyInfo->ApiPermission&$permission) <> $permission)
+                {
+                    $app->halt(401, 'Esta ApiKey não pode realizar este tipo de operação.');
+                }
+                $callback($app);
+            });
+        }
 
         /**
          * Obtém a chave de criptografia do cliente.

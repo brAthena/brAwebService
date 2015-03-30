@@ -70,11 +70,6 @@ namespace brAWebServer
             // Iguala para poder usar dentro das funções. $this nao pode ser enviado.
             $app = $this;
 
-            // Default environment
-            $this->container->singleton('environment', function ($c) use ($app) {
-                return brAEnvironment::_getInstance($app);
-            });
-
             $this->add(new \Slim\Middleware\ContentTypes());
             
             // Executa as operações para verificação do apiKey ao banco de dados.
@@ -84,7 +79,7 @@ namespace brAWebServer
                 // Caso esteja em modo manutenção, não permite que a requisição seja continuada.
                 if($app->simpleXmlHnd->maintence === true)
                 {
-                    $app->halt(503, 'Em manutenção. Tente mais tarde.');
+                    $app->sendResponse(503, 'Em manutenção. Tente mais tarde.');
                 }
                 else
                 {
@@ -94,95 +89,56 @@ namespace brAWebServer
                     // Se token não foi enviado para a aplicação.
                     if(is_null($apiKey) === true)
                     {
-                        $app->halt(400, 'Acesso negado. ApiKey de acesso não fornecido.');
+                        $app->sendResponse(400, 'Acesso negado. ApiKey de acesso não fornecido.');
                     }
                     else if($app->checkApiKey($apiKey) === false)
                     { // ApiKey inválido.
-                        $app->halt(401, 'Acesso negado. ApiKey inválida! Verifique por favor.');
+                        $app->sendResponse(401, 'Acesso negado. ApiKey inválida! Verifique por favor.');
                     }
                     else
                     {
                         // Remove a criptografia dos dados enviados.
-                        $app->environment['slim.input'] = openssl_decrypt($app->environment['slim.input'],
-                            $app->apiKeyInfo->ApiPassMethod, $app->getClientKey(), 0, '0000000000000000');
+                        $app->environment['slim.input'] = $app->apiDecrypt($app->environment['slim.input']);
+
                         unset($app->environment['slim.request.form_hash']); // Deleta o hash inicial.
                     }
                 }
             });
 
-            // Adiciona o método para put de crição de contas.
-            $this->put('/account/', function() use ($app) {
-                if(($app->apiKeyInfo->ApiPermission&'10000000000000000000') <> '10000000000000000000')
-                {
-                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
-                }
-                bra_Account_Put($app);
-            });
-
-            // Adiciona método para POST de realizar login.
-            $this->post('/account/login/', function() use ($app) {
-                if(($app->apiKeyInfo->ApiPermission&'01000000000000000000') <> '01000000000000000000')
-                {
-                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
-                }
-                bra_AccountLogin_Post($app);
-            });
-            
-            // Adiciona método para POST de alteração de senha.
-            $this->post('/account/password/', function() use ($app) {
-                if(($app->apiKeyInfo->ApiPermission&'01100000000000000000') <> '01100000000000000000')
-                {
-                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
-                }
-                bra_AccountChangePass_Post($app);
-            });
-            
-            // Adiciona método para POST de alteração de email.
-            $this->post('/account/email/', function() use ($app) {
-                if(($app->apiKeyInfo->ApiPermission&'01010000000000000000') <> '01010000000000000000')
-                {
-                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
-                }
-                bra_AccountChangeMail_Post($app);
-            });
-            
-            // Adiciona método para POST de alteração de sexo.
-            $this->post('/account/sex/', function() use ($app) {
-                if(($app->apiKeyInfo->ApiPermission&'01001000000000000000') <> '01001000000000000000')
-                {
-                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
-                }
-                bra_AccountChangeSex_Post($app);
-            });
-            
-            // Adiciona método para GET de listagem de personagens.
-            $this->post('/account/chars/', function() use ($app) {
-                if(($app->apiKeyInfo->ApiPermission&'01000100000000000000') <> '01000100000000000000')
-                {
-                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
-                }
-                bra_CharList_Post($app);
-            });
-            
-            // Adiciona método para POST de alteração de posição.
-            $this->post('/account/chars/reset/posit/', function() use ($app) {
-                if(($app->apiKeyInfo->ApiPermission&'01000010000000000000') <> '01000010000000000000')
-                {
-                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
-                }
-                bra_CharResetPosit_Post($app);
-            });
-            
-            // Adiciona método para POST de alteração de posição.
-            $this->post('/account/chars/reset/appear/', function() use ($app) {
-                if(($app->apiKeyInfo->ApiPermission&'01000001000000000000') <> '01000001000000000000')
-                {
-                    $app->halt(401, 'Esta chave de acesso não possui permissões para esta ação.');
-                }
-                bra_CharResetAppear_Post($app);
-            });
+            // Adicionado método para registrar as rotas, callbacks e permissões de acesso. bra_Account_Put
+            $this->registerRoute('put',     '/account/',                        'bra_Account_Put',              '10000000000000000000');
+            $this->registerRoute('post',    '/account/login/',                  'bra_AccountLogin_Post',        '01000000000000000000');
+            $this->registerRoute('post',    '/account/password/',               'bra_AccountChangePass_Post',   '01100000000000000000');
+            $this->registerRoute('post',    '/account/email/',                  'bra_AccountChangeMail_Post',   '01010000000000000000');
+            $this->registerRoute('post',    '/account/sex/',                    'bra_AccountChangeSex_Post',    '01001000000000000000');
+            $this->registerRoute('post',    '/account/chars/',                  'bra_CharList_Post',            '01000100000000000000');
+            $this->registerRoute('post',    '/account/chars/reset/posit/',      'bra_CharResetPosit_Post',      '01000010000000000000');
+            $this->registerRoute('post',    '/account/chars/reset/appear/',     'bra_CharResetAppear_Post',     '01000001000000000000');
 
         } // fim - public function __construct()
+
+        /**
+         * Registra uma chamada para um callback para uma rota dependente de method.
+         *
+         * @param string $method Método para definir a rota. (GET, POST, PUT, DELETE)
+         * @param string $route Método para a rota ser executada.
+         * @param string $permission Permissões da APIKEY para execução do action e method.
+         * @param callback $callback função a ser executada quando a rota for utilizada.
+         *
+         * @return void
+         */
+        public function registerRoute($method, $route, $callback, $permission)
+        {
+            $app = $this;
+            $this->{$method}($route, function() use ($app, $callback, $permission){
+                if(($app->apiKeyInfo->ApiPermission&$permission) <> $permission)
+                {
+                    $app->sendResponse(401, 'Esta ApiKey não pode realizar este tipo de operação.');
+                }
+                $callback($app);
+            });
+            return;
+        }
 
         /**
          * Obtém a chave de criptografia do cliente.
@@ -199,24 +155,25 @@ namespace brAWebServer
          * Obtém os campos que serão utilizados para uma requisição. Caso algum parametro não seja recebido,
          *  então retorna 400 com a mensagem de erro.
          *
-         * @param array $fields Campos a serem lidos.
-         * @param string $msgNull Mensagem para retorno.
+         * @param ... Recebe os itens que serão verificados.
          *
          * @return object
          */
-        public function getRequestFields(array $fields, $msgNull = 'Parametros solicitados não foram enviados.')
+        public function getRequestFields()
         {
             $array2obj = array();
-            foreach($fields as $field)
+
+            foreach(func_get_args() as $field)
             {
                 $field_ = $this->request()->post($field);
                 if(is_null($field_) === true)
                 {
-                    $this->halt(400, $msgNull. ' ('.implode(', ', $fields).')');
+                    $this->sendResponse(400, $msgNull. ' ('.implode(', ', func_get_args()).')');
                     return null;
                 }
                 $array2obj[$field] = $field_;
             }
+            
             return (object)$array2obj;
         }
 
@@ -230,38 +187,12 @@ namespace brAWebServer
          */
         public function charResetAppear($account_id, $char_id)
         {
-            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
-            
-            // Abre conexão com o mysql do ragnarok.
-            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
-                $pdoRagna->user, $pdoRagna->pass, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
-
-            $stmt = $this->pdoRagna->prepare("
-                UPDATE
-                    `char`
-                SET
-                    hair = 0,
-                    hair_color = 0,
-                    clothes_color = 0,
-                    head_top = 0,
-                    head_mid = 0,
-                    head_bottom = 0
-                WHERE
-                    account_id = :account_id AND
-                    char_id = :char_id AND
-                    online = 0
-            ");
-            $stmt->execute(array(
+            $params = array(
                 ':account_id' => $account_id,
                 ':char_id' => $char_id
-            ));
+            );
 
-            $bAparenciaResetada = $stmt->rowCount() > 0;
-
-            $this->pdoRagna = null;
-            return $bAparenciaResetada;
+            return $this->querySql($this->getPdoRagna(), QUERY_UPDATE_CHAR_APPEAR, $params, true) > 0;
         }
 
         /**
@@ -274,35 +205,12 @@ namespace brAWebServer
          */
         public function charResetPosit($account_id, $char_id)
         {
-            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
-            
-            // Abre conexão com o mysql do ragnarok.
-            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
-                $pdoRagna->user, $pdoRagna->pass, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
-
-            $stmt = $this->pdoRagna->prepare("
-                UPDATE
-                    `char`
-                SET
-                    last_map = save_map,
-                    last_x = save_x,
-                    last_y = save_y
-                WHERE
-                    account_id = :account_id AND
-                    char_id = :char_id AND
-                    online = 0
-            ");
-            $stmt->execute(array(
+            $params = array(
                 ':account_id' => $account_id,
                 ':char_id' => $char_id
-            ));
-
-            $bPosicaoResetada = $stmt->rowCount() > 0;
-
-            $this->pdoRagna = null;
-            return $bPosicaoResetada;
+            );
+            
+            return $this->querySql($this->getPdoRagna(), QUERY_UPDATE_CHAR_POSITION, $params, true) > 0;
         }
 
         /**
@@ -314,45 +222,14 @@ namespace brAWebServer
          */
         public function charList($account_id)
         {
-            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
-            
-            // Abre conexão com o mysql do ragnarok.
-            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
-                $pdoRagna->user, $pdoRagna->pass, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
-            
-            $aChars = array();
-            $stmt = $this->pdoRagna->prepare("
-                SELECT
-                    account_id,
-                    char_id,
-                    name,
-                    char_num,
-                    class as class_,
-                    base_level,
-                    job_level,
-                    last_map,
-                    last_x,
-                    last_y,
-                    save_map,
-                    save_x,
-                    save_y,
-                    online
-                FROM
-                    `char`
-                WHERE
-                    account_id = :account_id
-                ORDER BY
-                    char_num ASC
-            ");
-            $stmt->execute(array(
+            $params = array(
                 ':account_id' => $account_id
-            ));
+            );
             
-            $aChars = $stmt->fetchAll(\PDO::FETCH_OBJ);
-            $this->pdoRagna = null;
-            return $aChars;
+            $list = $this->querySql($this->getPdoRagna(), QUERY_SELECT_CHAR_LIST, $params);
+            if(!is_array($list)) $list = array($list);
+            
+            return $list;
         }
         
         /**
@@ -369,36 +246,15 @@ namespace brAWebServer
             $accountValidation = $this->simpleXmlHnd->accountValidation;
 
             if(!preg_match("/{$accountValidation->sex}/i", $sex))
-                $this->halt(400, 'Sexo de conta em formato incorreto!');
+                $this->sendResponse(400, 'Sexo de conta em formato incorreto!');
 
-            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
-            
-            // Abre conexão com o mysql do ragnarok.
-            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
-                $pdoRagna->user, $pdoRagna->pass, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
-
-            $stmt = $this->pdoRagna->prepare("
-                UPDATE
-                    login
-                SET
-                    sex = :sex
-                WHERE
-                    account_id = :account_id AND
-                    group_id <= :max_group_id
-            ");
-            $stmt->execute(array(
+            $params = array(
                 ':account_id' => $account_id,
                 ':sex' => $sex,
                 ':max_group_id' => $this->simpleXmlHnd->maxGroupId
-            ));
+            );
 
-            $bChanged = $stmt->rowCount() > 0;
-
-            $this->pdoRagna = null;
-
-            return $bChanged;
+            return $this->querySql($this->getPdoRagna(), QUERY_UPDATE_ACC_SEX, $params, true) > 0;
         }
         
         /**
@@ -416,42 +272,20 @@ namespace brAWebServer
             $accountValidation = $this->simpleXmlHnd->accountValidation;
 
             if(!preg_match("/{$accountValidation->email}/i", $old_email))
-                $this->halt(400, 'Endereço de email em formato inválido!');
+                $this->sendResponse(400, 'Endereço de email em formato inválido!');
             else if(!preg_match("/{$accountValidation->email}/i", $new_email))
-                $this->halt(400, 'Endereço de email em formato inválido!');
+                $this->sendResponse(400, 'Endereço de email em formato inválido!');
             else if($old_email == $new_email)
                 return false;
 
-            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
-            
-            // Abre conexão com o mysql do ragnarok.
-            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
-                $pdoRagna->user, $pdoRagna->pass, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
-
-            $stmt = $this->pdoRagna->prepare("
-                UPDATE
-                    login
-                SET
-                    email = :new_email
-                WHERE
-                    account_id = :account_id AND
-                    email = :old_email AND
-                    group_id <= :max_group_id
-            ");
-            $stmt->execute(array(
-                ':new_email' => $new_email,
+            $params = array(
                 ':account_id' => $account_id,
-                ':old_email' => $old_email,
-                ':max_group_id' => $this->simpleXmlHnd->maxGroupId
-            ));
+                ':max_group_id' => $this->simpleXmlHnd->maxGroupId,
+                ':new_email' => $new_email,
+                ':old_email' => $old_email
+            );
 
-            $bChanged = $stmt->rowCount() > 0;
-
-            $this->pdoRagna = null;
-
-            return $bChanged;
+            return $this->querySql($this->getPdoRagna(), QUERY_UPDATE_ACC_MAIL, $params, true) > 0;
         }
         
         /**
@@ -467,41 +301,20 @@ namespace brAWebServer
             $accountValidation = $this->simpleXmlHnd->accountValidation;
 
             if(!preg_match("/{$accountValidation->userpass}/i", $old_userpass))
-                $this->halt(400, 'Senhas de usuário em formato inválido!');
+                $this->sendResponse(400, 'Senhas de usuário em formato inválido!');
             else if(!preg_match("/{$accountValidation->userpass}/i", $new_userpass))
-                $this->halt(400, 'Senhas de usuário em formato inválido!');
+                $this->sendResponse(400, 'Senhas de usuário em formato inválido!');
             else if($old_userpass == $new_userpass)
                 return false;
 
-            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
-            
-            // Abre conexão com o mysql do ragnarok.
-            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
-                $pdoRagna->user, $pdoRagna->pass, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
-
-            $stmt = $this->pdoRagna->prepare("
-                UPDATE
-                    login
-                SET
-                    user_pass = :new_userpass
-                WHERE
-                    account_id = :account_id AND
-                    user_pass = :old_userpass AND
-                    group_id <= :max_group_id");
-            $stmt->execute(array(
+            $params = array(
                 ':new_userpass' => $new_userpass,
                 ':account_id' => $account_id,
                 ':old_userpass' => $old_userpass,
                 ':max_group_id' => $this->simpleXmlHnd->maxGroupId
-            ));
+            );
 
-            $bChanged = $stmt->rowCount() > 0;
-
-            $this->pdoRagna = null;
-
-            return $bChanged;
+            return $this->querySql($this->getPdoRagna(), QUERY_UPDATE_ACC_PASSWORD, $params, true) > 0;
         }
 
         /**
@@ -519,47 +332,27 @@ namespace brAWebServer
 
             // Verifica se todos os dados recebidos estão dentro dos regex.
             if(!preg_match("/{$accountValidation->username}/i", $username))
-                $this->halt(400, 'Nome de usuário em formato inválido!');
+                $this->sendResponse(400, 'Nome de usuário em formato inválido!');
             else if(!preg_match("/{$accountValidation->userpass}/i", $userpass))
-                $this->halt(400, 'Senha de usuário em formato inválido!');
+                $this->sendResponse(400, 'Senha de usuário em formato inválido!');
 
-            $account_id = -1;
-            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
-            
-            // Abre conexão com o mysql do ragnarok.
-            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
-                $pdoRagna->user, $pdoRagna->pass, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
-
-            // Executa a consulta no banco de dados.
-            $stmt = $this->pdoRagna->prepare("SELECT account_id, userid FROM login WHERE userid = :userid AND user_pass = :user_pass and group_id <= :max_group_id");
-            $stmt->execute(array(
-                ':userid' => $username,
-                ':user_pass' => $userpass,
-                ':max_group_id' => $this->simpleXmlHnd->maxGroupId
-            ));
-            // Retorna os dados para verificação.
-            $obj = $stmt->fetchObject();
-
-            // Não encontrou o nome de usuário.
-            if($obj === false)
-            {
-                return false;
-            }
-
-            // Obtém os dados da conta logada.
-            $account_id = $obj->account_id;
-            $username = $obj->userid;
-
-            // Fecha a conexão com o servidor do ragnarok.
-            $this->pdoRagna = null;
-
-            return (object)array(
-                'account_id' => $account_id,
-                'username' => $username,
-                'loginTime' => time()
+            $params = array(
+                    ':userid' => $username,
+                    ':user_pass' => $userpass,
+                    ':max_group_id' => $this->simpleXmlHnd->maxGroupId
             );
+
+            // Testa a query e tenta executar a query para realizar login.
+            if(($obj = $this->querySql($this->getPdoRagna(), QUERY_SELECT_ACC_LOGIN, $params)) !== false)
+            {
+                $obj = (object)array(
+                    'account_id' => $obj->account_id,
+                    'username' => $obj->userid,
+                    'loginTime' => time()
+                );
+            }
+            
+            return $obj;
         }
 
         /**
@@ -579,52 +372,41 @@ namespace brAWebServer
 
             // Verifica se todos os dados recebidos estão dentro dos regex.
             if(!preg_match("/{$accountValidation->username}/i", $username))
-                $this->halt(400, 'Nome de usuário em formato inválido!');
+                $this->sendResponse(400, 'Nome de usuário em formato inválido!');
             else if(!preg_match("/{$accountValidation->userpass}/i", $userpass))
-                $this->halt(400, 'Senha de usuário em formato inválido!');
+                $this->sendResponse(400, 'Senha de usuário em formato inválido!');
             else if(!preg_match("/{$accountValidation->sex}/i", $sex))
-                $this->halt(400, 'Sexo para conta inválido! Aceitos: M ou F');
+                $this->sendResponse(400, 'Sexo para conta inválido! Aceitos: M ou F');
             else if(!preg_match("/{$accountValidation->email}/i", $email))
-                $this->halt(400, 'Email de usuário em formato inválido');
+                $this->sendResponse(400, 'Email de usuário em formato inválido');
 
             $account_id = -1;
-            $pdoRagna = $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
-            
-            // Abre conexão com o mysql do ragnarok.
-            $this->pdoRagna = new \PDO($pdoRagna->connectionString,
-                $pdoRagna->user, $pdoRagna->pass, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
 
-            // Query para verificar se o nome de usuário existe.
-            // Chave no banco de dados não está unique!!! Por isso é necessário a verificação.
-            $stmt = $this->pdoRagna->prepare("SELECT account_id FROM login WHERE userid = :userid");
-            $stmt->execute(array(
+            $params = array(
                 ':userid' => $username
-            ));
-            $objAccount = $stmt->fetchObject();
+            );
             
-            // Já existe a conta no banco de dados pois retornou alguma coisa.
-            if($objAccount !== false)
+            // Verifica se a conta solicitada já existe no banco de dados. A Chave unique não está declarada, então
+            // Necessárior realizar a verificação.
+            if($this->querySql($this->getPdoRagna(), QUERY_SELECT_ACC_CHECK, $params) !== false)
             {
-                $this->halt(401, 'Nome de usuário já cadastrado.');
+                // Retorna falso pois por questões de segurança não informar que nome de usuário
+                // já existe.
+                return false;
             }
             
-            // Prepara a query a ser executada para inserir o usuário no banco de dados.
-            // rAthena@8d47306
-            $stmt = $this->pdoRagna->prepare("INSERT INTO login (userid, user_pass, sex, email) VALUES (:userid, :user_pass, :sex, :email);");
-            $stmt->execute(array(
+            $params = array(
                 ':userid' => $username,
                 ':user_pass' => $userpass,
                 ':sex' => $sex,
                 ':email' => $email
-            ));
+            );
             
-            // Obtém o ultimo account_id lançado na tabela de login.
-            $account_id = $this->pdoRagna->lastInsertId();
-
-            // Fecha a conexão com o servidor do ragnarok.
-            $this->pdoRagna = null;
+            // Verifica se a conta não foi criada. Retorna falso pois não foi possivel criar a conta.
+            if($this->querySql($this->getPdoRagna(), QUERY_INSERT_ACC_NEW, $params, true, $account_id) == 0)
+            {
+                return false;
+            }
 
             // Retorna o objeto de conta.
             return (object)array(
@@ -643,63 +425,93 @@ namespace brAWebServer
          */
         public function checkApiKey($apiKey)
         {
-            $bExists = false;
-            
-            $this->pdoServer = new \PDO($this->simpleXmlHnd->PdoServerConnection->{'@attributes'}->connectionString,
-                NULL, NULL, array(
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ));
-            $stmt = $this->pdoServer->prepare('
-                UPDATE
-                    brawbkeys
-                SET
-                    ApiUsedCount = ApiUsedCount + 1
-                WHERE
-                    ApiKey = :ApiKey
-                        AND
-                    (ApiUnlimitedCount = 1
-                        or (ApiUsedCount < ApiLimitCount AND date() <= ApiExpires))
-            ');
-            $stmt->execute(array(
-                ':ApiKey' => $apiKey
-            ));
+            // Query para verificar se o apikey existe.
+            $bExists = $this->querySql($this->getPdoServer(), QUERY_UPDATE_APIKEY_COUNT, array(':ApiKey' => $apiKey), true) > 0;
 
-            // Se a chave existir, então carregará em memória os dados para criptografia da mesma.
-            if(($bExists = ($stmt->rowCount() > 0)) === true)
-            {
-                $stmt = $this->pdoServer->prepare('
-                    SELECT
-                        *
-                    FROM
-                        brawbkeys
-                    WHERE
-                        ApiKey = :ApiKey
-                ');
-                $stmt->execute(array(
-                    ':ApiKey' => $apiKey
-                ));
-                // Obtém os dados e joga num atributo da classe.
-                $this->apiKeyInfo = $stmt->fetchObject();
-            }
+            // Caso exista, obtem os dados para leitura interna.
+            if($bExists === true)
+                $this->apiKeyInfo = $this->querySql($this->getPdoServer(), QUERY_SELECT_APIKEY_DATA,array(':ApiKey' => $apiKey));
 
-            $this->pdoServer = null;
             return $bExists;
         }
         
         /**
-         * Sobre-escrito para retornar uma mensagem de erro e hora da ocorrência do problema.
-         *
-         * @see \Slim\Slim::halt()
-         *
-         * @override
+         * Obtém os dados de conexão para o servidor local.
+         * @return object
          */
-        public function halt($status, $message = '')
+        private function getPdoServer()
+        {
+            return $this->simpleXmlHnd->PdoServerConnection->{'@attributes'};
+        }
+
+        /**
+         * Obtém os dados de conexão para o servidor ragnarok.
+         * @return object
+         */
+        private function getPdoRagna()
+        {
+            return $this->simpleXmlHnd->PdoRagnaConnection->{'@attributes'};
+        }
+        
+        /**
+         * Executa uma query no banco de dados.
+         *
+         * @param object $conf Configuração a ser utilizada para execução da query.
+         * @param string $query Query a ser executada no banco.
+         * @param array $params Parametros a serem passados a query.
+         * @param boolean $returnRowCount Se verdadeiro retorna o número de linhas executadas.
+         * @param int* $last_id Caso definido, retorna o ultimo id no banco de dados.
+         *
+         * @return mixed
+         */
+        private function querySql($conf, $query, $params = array(), $returnRowCount = false, &$last_id = null)
+        {
+            $objReturn = null;
+            $pdo = new \PDO($conf->connectionString, $conf->user, $conf->pass, array(
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+            ));
+            
+            $stmt = $pdo->prepare($query);
+            $stmt->execute($params);
+            
+            // Caso
+            if($returnRowCount === true)
+            {
+                $last_id = $pdo->lastInsertId();
+                $objReturn = $stmt->rowCount();
+            }
+            else
+            {
+                $tmp = $stmt->fetchAll(\PDO::FETCH_OBJ);
+                $objReturn = ((sizeof($tmp) == 0) ? false:
+                                ((sizeof($tmp) == 1) ? $tmp[0]:$tmp));
+                unset($tmp);
+            }
+
+            $pdo = null;
+            return $objReturn;
+        }
+
+        /**
+         * Retorna a mensagem para que seja respondido nos conformes.
+         *
+         * @param integer $status Código de resposta.
+         * @param string $message Mensagem de resposta.
+         * @param $object Objeto json de resposta.
+         *
+         * @return void
+         */
+        public function sendResponse($status, $message, $object = -1)
         {
             $time = time();
-            parent::halt($status, $this->returnString(json_encode((object)array(
+            $object = json_encode($object);
+
+            $this->halt($status, $this->returnString(json_encode((object)array(
                 'code' => $status,
                 'message' => $message,
-                'messageHash' => hash('sha512', $message.$time),
+                'messageHash' => hash('sha512', $message . $time),
+                'object' => $object,
+                'objectHash' => hash('sha512', $object . $time),
                 'time' => $time
             ))));
         }
@@ -713,10 +525,33 @@ namespace brAWebServer
          */
         public function returnString($str)
         {
-            return (($this->apiKeyInfo != null) ?
-                openssl_encrypt($str, $this->apiKeyInfo->ApiPassMethod, $this->getClientKey(), 0, '0000000000000000'):
-                    $str);
+            return ((is_null($this->apiKeyInfo) === true) ? $str:$this->apiEncrypt($str));
         }
+
+        /**
+         * Método utilizado para criptografar dados enviados pelo client.
+         *
+         * @param string $str String criptografada.
+         *
+         * @return string
+         */
+        public function apiEncrypt($str)
+        {
+            return openssl_encrypt($str, $this->apiKeyInfo->ApiPassMethod, $this->getClientKey(), 0, '0000000000000000');
+        }
+
+        /**
+         * Método utilizado para decriptografar dados enviados pelo client.
+         *
+         * @param string $str String criptografada.
+         *
+         * @return string
+         */
+        public function apiDecrypt($str)
+        {
+            return openssl_decrypt($str, $this->apiKeyInfo->ApiPassMethod, $this->getClientKey(), 0, '0000000000000000');
+        }
+
     } // fim - class brAWebServer extends \Slim\Slim
 } // fim - namespace brAWebServer
 ?>

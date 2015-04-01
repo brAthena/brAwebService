@@ -31,18 +31,6 @@ namespace brAWebServer
         public $simpleXmlHnd;
 
         /**
-         * Gancho com a conexão sql do server do webservice.
-         * @var \PDO
-         */
-        public $pdoServer;
-
-        /**
-         * Gancho com a conexão sql do servidor do ragnarok.
-         * @var \PDO
-         */
-        public $pdoRagna;
-
-        /**
          * Dados de criptografia para o APIKEY.
          * @var object
          */
@@ -510,8 +498,8 @@ namespace brAWebServer
                 'code' => $status,
                 'message' => $message,
                 'messageHash' => hash('sha512', $message . $time),
-                'object' => $object,
-                'objectHash' => hash('sha512', $object . $time),
+                'json' => $object,
+                'jsonHash' => hash('sha512', $object . $time),
                 'time' => $time
             ))));
         }

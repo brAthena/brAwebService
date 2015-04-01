@@ -22,7 +22,7 @@ Durante o desenvolvimento do **brAWebService** foram utilizados:
 
 ## Resolvendo Problemas
 
-Se você está com problemas ao utilizar o serviço você primeiro deve verificar se está documentado o problema. Realize uma busca em nossa Wiki e em nosso [Issue list](https://github.com/carloshenrq/brAWebService/issues) para saber se já resolvido ou como contornar a situação.
+Se você está com problemas ao utilizar o serviço você primeiro deve verificar se está documentado o problema. Realize uma busca em nosso [Issue list](https://github.com/carloshenrq/brAWebService/issues) para saber se já resolvido ou como contornar a situação.
 
 Se você não encontrar a solução do problema em nossa documentação, porque não criar um issue? ^.^
 
@@ -42,9 +42,6 @@ Com ele, você poderá adicionar ao seu atualizador uma funcionalidade para cada
 
 Abaixo segue uma relação de links que podem ser uteis na implementação do *brAWebService*.
 
-* [Documentação do brAWebService](https://github.com/carloshenrq/brawebservice/wiki)
-    * [Configurando o brAWebService](https://github.com/carloshenrq/brawebservice/wiki/Configurando-o-brAWebService)
-    * [Criando uma Conta](https://github.com/carloshenrq/brawebservice/wiki/Criando-uma-Conta)
 * [brAWebClient (PHP e C#)](https://github.com/carloshenrq/brawebclient)
 * [brAthena](http://forum.brathena.org/)
 * [Apache](https://www.apache.org/)

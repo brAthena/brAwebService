@@ -41,7 +41,7 @@ namespace brAWebServer
          *
          * @param array $userSettings Configurações do framework para execução.
          */
-        public function __construct()
+        public function __construct($userSettings = null)
         {
             // Carrega o xml de configuração do sistema. Adicionado isso pois não estava conseguindo realizar a leitura
             // dos atributos corretamente.
@@ -50,10 +50,17 @@ namespace brAWebServer
             // Converte os campos para informações de filtros.
             $this->simpleXmlHnd->maintence = filter_var($this->simpleXmlHnd->maintence, FILTER_VALIDATE_BOOLEAN);
 
+            // Caso as configurações de usuários não tenham sido enviadas ou estejam vazias, então completa com as configurações
+            // padrões de execução.
+            if(is_null($userSettings) || !is_array($userSettings) || empty($userSettings))
+            {
+                $userSettings = array(
+                    'log.writer' => new \Slim\LogWriter(fopen(dirname(__FILE__).'/../Logs/brAWebServer.log', 'a+')) // logs
+                );
+            }
+
             // Configurações padrões para a execução da aplicação.
-            parent::__construct(array(
-                'log.writer' => new \Slim\LogWriter(fopen(dirname(__FILE__).'/../Logs/brAWebServer.log', 'a+')) // logs
-            ));
+            parent::__construct($userSettings);
             
             // Iguala para poder usar dentro das funções. $this nao pode ser enviado.
             $app = $this;
@@ -131,7 +138,7 @@ namespace brAWebServer
         /**
          * Obtém a chave de criptografia do cliente.
          *
-         * @return string
+         * @return string Chave que o cliente usou para criptografia.
          */
         public function getClientKey()
         {
@@ -171,7 +178,7 @@ namespace brAWebServer
          * @param integer $account_id Conta do personagem que será resetado.
          * @param integer $char_id Código do char que será resetado.
          *
-         * @return boolean
+         * @return boolean Retorna verdadeiro caso a aparência tenha sido alterada.
          */
         public function charResetAppear($account_id, $char_id)
         {
@@ -189,7 +196,7 @@ namespace brAWebServer
          * @param integer $account_id Conta do personagem que será resetado.
          * @param integer $char_id Código do char que será resetado.
          *
-         * @return boolean
+         * @return boolean Retorna verdadeiro caso a posição tenha sido alterada.
          */
         public function charResetPosit($account_id, $char_id)
         {
@@ -204,9 +211,9 @@ namespace brAWebServer
         /**
          * Obtém a lista de personagens para a conta solicitada.
          *
-         * @param integer $account_id
+         * @param integer $account_id Código da conta que será a lista de personagens.
          *
-         * @return array
+         * @return array Lista de personagens que retornaram para a conta informada.
          */
         public function charList($account_id)
         {
@@ -223,10 +230,10 @@ namespace brAWebServer
         /**
          * Realiza alteração de sexo da conta do usuário.
          *
-         * @param integer $account_id
-         * @param string $sex
+         * @param integer $account_id Código da conta para alteração de sexo.
+         * @param string $sex Sexo que a conta irá receber. M ou F.
          *
-         * @return boolean
+         * @return boolean Retorna verdadeiro se a conta sofreu alteração de sexo.
          */
         public function changeSex($account_id, $sex)
         {
@@ -248,11 +255,11 @@ namespace brAWebServer
         /**
          * Realiza alteração de email da conta do usuário.
          *
-         * @param integer $account_id
-         * @param string $old_email
-         * @param string $new_email
+         * @param integer $account_id Código da conta para alteração de e-mail.
+         * @param string $old_email Endereço de email antigo.
+         * @param string $new_email Endereço de email novo.
          *
-         * @return boolean
+         * @return boolean Retorna verdadeiro caso o email tenha sido trocado com sucesso.
          */
         public function changeMail($account_id, $old_email, $new_email)
         {
@@ -282,6 +289,8 @@ namespace brAWebServer
          * @param integer $account_id Código da conta que será alterado.
          * @param string $old_userpass Senha antiga da conta.
          * @param string $new_userpass Senha nova da conta.
+         *
+         * @return boolean Retorna verdadeiro caso a senha de usuário tenha sido alterada com sucesso.
          */
         public function changePass($account_id, $old_userpass, $new_userpass)
         {
@@ -311,7 +320,7 @@ namespace brAWebServer
          * @param string $username Nome do usuário a realizar login. [Padrão: ^([a-z0-9]{4,24})$]
          * @param string $userpass Senha de usuário. [Padrão: ^([a-f0-9]{32})$]
          *
-         * @return object
+         * @return object Objeto contendo os dados para o login realizado.
          */
         public function login($username, $userpass)
         {
@@ -407,9 +416,9 @@ namespace brAWebServer
         /**
          * Verifica se o apikey solicitado é valido. E atualiza a contagem do ApiKey.
          *
-         * @param string $apiKey
+         * @param string $apiKey Chave da api que está realizando a conexão com o webservice.
          *
-         * @return boolean
+         * @return boolean Retorna verdadeiro caso seja uma chave válida.
          */
         public function checkApiKey($apiKey)
         {
@@ -507,9 +516,9 @@ namespace brAWebServer
         /**
          * Retorna a string criptografada.
          *
-         * @param string $str
+         * @param string $str String a ser processada e retornada.
          *
-         * @return string
+         * @return string Caso a api esteja definida, retorna a string criptografada.
          */
         public function returnString($str)
         {
@@ -519,9 +528,9 @@ namespace brAWebServer
         /**
          * Método utilizado para criptografar dados enviados pelo client.
          *
-         * @param string $str String criptografada.
+         * @param string $str String a ser criptografada.
          *
-         * @return string
+         * @return string Retorna a string enviada criptografada.
          */
         public function apiEncrypt($str)
         {
@@ -533,7 +542,7 @@ namespace brAWebServer
          *
          * @param string $str String criptografada.
          *
-         * @return string
+         * @return string Retorna a string enviada decriptografada.
          */
         public function apiDecrypt($str)
         {

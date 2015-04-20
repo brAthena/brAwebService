@@ -70,33 +70,39 @@ namespace brAWebServer
             // Executa as operações para verificação do apiKey ao banco de dados.
             // Tirei como base: https://gist.github.com/RodolfoSilva/1f438da56cb55c1eaea0 [carloshlfz, 10/03/2015]
             $this->hook('slim.before.router', function() use ($app) {
-                
-                // Caso esteja em modo manutenção, não permite que a requisição seja continuada.
-                if($app->simpleXmlHnd->maintence === true)
+                try
                 {
-                    $app->sendResponse(503, 'Em manutenção. Tente mais tarde.');
-                }
-                else
-                {
-                    // ApiKey de acesso ao sistema.
-                    $apiKey = $app->request()->get('apiKey');
-
-                    // Se token não foi enviado para a aplicação.
-                    if(is_null($apiKey) === true)
+                    // Caso esteja em modo manutenção, não permite que a requisição seja continuada.
+                    if($app->simpleXmlHnd->maintence === true)
                     {
-                        $app->sendResponse(400, 'Acesso negado. ApiKey de acesso não fornecido.');
-                    }
-                    else if($app->checkApiKey($apiKey) === false)
-                    { // ApiKey inválido.
-                        $app->sendResponse(401, 'Acesso negado. ApiKey inválida! Verifique por favor.');
+                        $app->sendResponse(503, 'Em manutenção. Tente mais tarde.');
                     }
                     else
                     {
-                        // Remove a criptografia dos dados enviados.
-                        $app->environment['slim.input'] = $app->apiDecrypt($app->environment['slim.input']);
+                        // ApiKey de acesso ao sistema.
+                        $apiKey = $app->request()->get('apiKey');
 
-                        unset($app->environment['slim.request.form_hash']); // Deleta o hash inicial.
+                        // Se token não foi enviado para a aplicação.
+                        if(is_null($apiKey) === true)
+                        {
+                            $app->sendResponse(400, 'Acesso negado. ApiKey de acesso não fornecido.');
+                        }
+                        else if($app->checkApiKey($apiKey) === false)
+                        { // ApiKey inválido.
+                            $app->sendResponse(401, 'Acesso negado. ApiKey inválida! Verifique por favor.');
+                        }
+                        else
+                        {
+                            // Remove a criptografia dos dados enviados.
+                            $app->environment['slim.input'] = $app->apiDecrypt($app->environment['slim.input']);
+
+                            unset($app->environment['slim.request.form_hash']); // Deleta o hash inicial.
+                        }
                     }
+                }
+                catch(\Exception $ex)
+                {
+                    $app->sendResponse(500, $ex->getMessage());
                 }
             });
 

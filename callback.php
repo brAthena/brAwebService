@@ -18,6 +18,26 @@
  */
 
 /**
+ * Função que permite criar uma nova api key para retorno.
+ *
+ * @param \brAWebServer\brAWebServer $app
+ */
+function bra_ApiKey_Put(\brAWebServer\brAWebServer $app)
+{
+    // Obtém os dados da requisição PUT.
+    $request = $app->getRequestFields('method', 'permission', 'limitCount', 'expire');
+    
+    if(($obj = $app->createApiKey($request->method, $request->permission, $request->limitCount, $request->expire)) === false)
+    {
+        $app->sendResponse(400, 'Impossivel criar nova chave de aplicação.');
+    }
+    else
+    {
+        $app->sendResponse(200, 'Chave de aplicação criada com sucesso.', $obj);
+    }
+}
+
+/**
  * Função para listar todos os personagens da conta.
  *
  * @param \brAWebServer\brAWebServer $app

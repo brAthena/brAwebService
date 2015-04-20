@@ -17,8 +17,9 @@ CREATE TABLE brawbkeys (
     -- 6º: Permite listagem de personagens. (Depende do 2º)
     -- 7º: Permite reset de posição. (Depende do 2º)
     -- 8º: Permite reset de aparência. (Depende do 2º)
+    -- 9º: Permite criar novas chaves api.
     -- -------------------------------------------------------------------------------------------------------------- --
-    -- OBS.: Permissões do 9º ao 20º livres para implementações customizadas.
+    -- OBS.: Permissões do 10º ao 20º livres para implementações customizadas.
     -- -------------------------------------------------------------------------------------------------------------- --
     ApiPermission CHAR(20) NOT NULL,
     ApiAllowed BOOLEAN NOT NULL DEFAULT true,

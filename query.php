@@ -38,6 +38,8 @@ DEFINE('QUERY_INSERT_ACC_NEW', 'INSERT INTO login (userid, user_pass, sex, email
 # APIKEY - ALL
 DEFINE('QUERY_SELECT_APIKEY_DATA', 'SELECT * FROM brawbkeys WHERE ApiKey = :ApiKey', false);
 DEFINE('QUERY_UPDATE_APIKEY_COUNT', 'UPDATE brawbkeys SET ApiUsedCount = ApiUsedCount + 1 WHERE ApiKey = :ApiKey AND '.
-                                    '(ApiUnlimitedCount = 1 or (ApiUsedCount < ApiLimitCount AND date() <= ApiExpires))', false);
+                                    '(ApiUnlimitedCount = "true" or (ApiUsedCount < ApiLimitCount AND date() <= ApiExpires))', false);
+DEFINE('QUERY_INSERT_APIKEY', 'INSERT INTO brawbkeys (KeyID, ApiKey, ApiPassMethod, ApiKeyCreated, ApiPermission, ApiAllowed, ApiExpires, ApiUsedCount, ApiLimitCount, ApiUnlimitedCount) '.
+                                'VALUES (NULL, :ApiKey, :ApiPassMethod, :ApiKeyCreated, :ApiPermission, "true", :ApiExpires, 0, :ApiLimitCount, :ApiUnlimitedCount)', false);
 
 ?>

@@ -102,7 +102,7 @@ namespace brAWebServer
                 }
                 catch(\Exception $ex)
                 {
-                    $app->sendResponse(500, print_r($ex, true));
+                    $app->sendResponse(500, $ex->getMessage());
                 }
             });
 

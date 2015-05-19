@@ -56,7 +56,35 @@ if(empty($_POST) === false)
     }
     else
     {
-        echo utf8_decode("Configurações foram salvas com sucesso.");
+        $pdo = new PDO($_POST['serviceConnectionString'], $_POST['serviceUser'], $_POST['servicePass']);
+        $pdo->exec(file_get_contents(dirname(__FILE__).'/Sql-Files/install.sql'));
+
+        $time = time();
+        $apiKey = hash_hmac('md5', uniqid(), $_POST['openSslPassword'] . $time);
+        $clientKey = hash_hmac('md5', $_POST['openSslPassword'], $time);
+        
+        $param = array(
+            ':ApiKey' => $apiKey,
+            ':ApiKeyCreated' => $time,
+            ':ApiExpires' => '2050-12-31'
+        );
+        
+        $stmt = $pdo->prepare('
+            INSERT INTO
+                brawbkeys
+            (KeyID, ApiKey, ApiPassMethod, ApiKeyCreated, ApiPermission, ApiAllowed, ApiExpires, ApiUsedCount, ApiLimitCount, ApiUnlimitedCount)
+                VALUES
+            (NULL, :ApiKey, "aes-256-cbc", :ApiKeyCreated, "11111111111111111111", "true", :ApiExpires, 0, 2147483647, "true");');
+        $stmt->execute($param);
+
+        $pdo = null;
+        echo utf8_decode("Configurações foram salvas com sucesso.<br><br>
+            <strong>Por favor, salve essas configurações. Utilize os dados abaixo para gerar novas chaves de Api para outros utilizarem.</strong>
+            <br><br>
+            <strong>ApiKey Mestre:</strong> {$apiKey}<br>
+            <strong>Chave de Criptografia:</strong> {$clientKey}<br>
+            <strong>Cifra:</strong> aes-256-cbc<br>
+        ");
     }
     exit;
 }

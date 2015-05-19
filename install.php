@@ -25,7 +25,7 @@ if(file_exists(dirname(__FILE__) . '/config.xml') === true)
 if(empty($_POST) === false)
 {
     $xml = new SimpleXMLElement('<brAWebServerConfig></brAWebServerConfig>');
-    $xml->addChild('maintence', 'yes');
+    $xml->addChild('maintence', 'no');
     
     $pdoServer = $xml->addChild('PdoServerConnection');
     $pdoServer->addAttribute('user', $_POST['serviceUser']);

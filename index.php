@@ -20,6 +20,14 @@
 // Carrega o arquivo de configuração das contantes.
 require_once(dirname(__FILE__).'/autoloader.php');
 
-$bra = new brAWebServer\brAWebServer();
-$bra->run();
+try
+{
+    $bra = new brAWebServer\brAWebServer();
+    $bra->run();
+}
+catch(Exception $ex)
+{
+    echo $ex->getMessage();
+    exit;
+}
 ?>

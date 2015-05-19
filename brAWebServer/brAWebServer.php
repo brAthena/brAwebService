@@ -43,6 +43,12 @@ namespace brAWebServer
          */
         public function __construct($userSettings = null)
         {
+            // Verifica a existência do arquivo de configuração.
+            if(file_exists(dirname(__FILE__).'/../config.xml') === false)
+            {
+                throw new \Exception(utf8_decode('Arquivo de configuração não encontrado. Favor, re-instalar o sistema.'));
+            }
+            
             // Carrega o xml de configuração do sistema. Adicionado isso pois não estava conseguindo realizar a leitura
             // dos atributos corretamente.
             $this->simpleXmlHnd = json_decode(json_encode(\simplexml_load_file (dirname(__FILE__).'/../config.xml')));

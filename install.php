@@ -66,7 +66,8 @@ if(empty($_POST) === false)
         $param = array(
             ':ApiKey' => $apiKey,
             ':ApiKeyCreated' => $time,
-            ':ApiExpires' => '2050-12-31'
+            ':ApiExpires' => '2050-12-31',
+            ':ApiPassMethod' => $_POST['cifra']
         );
         
         $stmt = $pdo->prepare('
@@ -74,7 +75,7 @@ if(empty($_POST) === false)
                 brawbkeys
             (KeyID, ApiKey, ApiPassMethod, ApiKeyCreated, ApiPermission, ApiAllowed, ApiExpires, ApiUsedCount, ApiLimitCount, ApiUnlimitedCount)
                 VALUES
-            (NULL, :ApiKey, "aes-256-cbc", :ApiKeyCreated, "11111111111111111111", "true", :ApiExpires, 0, 2147483647, "true");');
+            (NULL, :ApiKey, :ApiPassMethod, :ApiKeyCreated, "11111111111111111111", "true", :ApiExpires, 0, 2147483647, "true");');
         $stmt->execute($param);
 
         $pdo = null;
@@ -83,7 +84,7 @@ if(empty($_POST) === false)
             <br><br>
             <strong>ApiKey Mestre:</strong> {$apiKey}<br>
             <strong>Chave de Criptografia:</strong> {$clientKey}<br>
-            <strong>Cifra:</strong> aes-256-cbc<br>
+            <strong>Cifra:</strong> {$_POST['cifra']}<br>
         ");
     }
     exit;
@@ -149,6 +150,21 @@ $hash_algo = $hash_algos[ rand(0, sizeof($hash_algos) - 1) ];
                 <label>
                     Chave Privada:<br>
                     <input name="openSslPassword" value="<?php echo hash($hash_algo, microtime(true)); ?>" size="180" maxlength="180" type="text"/>
+                </label><br>
+                <label>
+                    Cifra da Chave-Mestra:<br>
+                    <select name="cifra">
+                        <?php
+                            foreach(openssl_get_cipher_methods() as $algo)
+                            {
+                                if(preg_match('/^aes\-([0-9]+)\-[^xts]/', $algo))
+                                { ?>
+                                    <option <?php if($algo == 'aes-256-cbc') { echo 'selected'; } ?>><?php echo $algo; ?></option>
+                                <?php
+                                }
+                            }
+                        ?>
+                    </select>
                 </label><br>
             </fieldset>
 

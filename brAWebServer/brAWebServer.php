@@ -43,6 +43,12 @@ namespace brAWebServer
          */
         public function __construct($userSettings = null)
         {
+            // Verifica a existência do arquivo de configuração.
+            if(file_exists(dirname(__FILE__).'/../config.xml') === false)
+            {
+                throw new \Exception(utf8_decode('Arquivo de configuração não encontrado. Favor, re-instalar o sistema.'));
+            }
+            
             // Carrega o xml de configuração do sistema. Adicionado isso pois não estava conseguindo realizar a leitura
             // dos atributos corretamente.
             $this->simpleXmlHnd = json_decode(json_encode(\simplexml_load_file (dirname(__FILE__).'/../config.xml')));
@@ -108,6 +114,7 @@ namespace brAWebServer
 
             // Adicionado método para registrar as rotas, callbacks e permissões de acesso. bra_Account_Put
             $this->registerRoute('put',     '/account/',                        'bra_Account_Put',              '10000000000000000000');
+            $this->registerRoute('put',     '/apikey/',                         'bra_ApiKey_Put',               '00000000100000000000');
             $this->registerRoute('post',    '/account/login/',                  'bra_AccountLogin_Post',        '01000000000000000000');
             $this->registerRoute('post',    '/account/password/',               'bra_AccountChangePass_Post',   '01100000000000000000');
             $this->registerRoute('post',    '/account/email/',                  'bra_AccountChangeMail_Post',   '01010000000000000000');
@@ -144,12 +151,16 @@ namespace brAWebServer
         /**
          * Obtém a chave de criptografia do cliente.
          *
+         * @param int $time Time para criação da key. (Default: null, caso null usa a da api conectada.)
+         *
          * @return string Chave que o cliente usou para criptografia.
          */
-        public function getClientKey()
+        public function getClientKey($time = null)
         {
-            return hash('md5',
-                $this->simpleXmlHnd->openSslSettings->password.$this->apiKeyInfo->ApiKeyCreated);
+            // Caso null, usa a da api atual.
+            if(is_null($time) === true) $time = $this->apiKeyInfo->ApiKeyCreated;
+            
+            return hash_hmac('md5', $this->simpleXmlHnd->openSslSettings->password, $time);
         }
 
         /**
@@ -167,15 +178,57 @@ namespace brAWebServer
             foreach(func_get_args() as $field)
             {
                 $field_ = $this->request()->post($field);
-                if(is_null($field_) === true)
+                if(is_null($field) === true)
                 {
-                    $this->sendResponse(400, $msgNull. ' ('.implode(', ', func_get_args()).')');
+                    $this->sendResponse(400, 'Campo necessário para requisição não encontrado. '. ' ('.implode(', ', func_get_args()).')');
                     return null;
                 }
                 $array2obj[$field] = $field_;
             }
             
             return (object)$array2obj;
+        }
+
+        /**
+         * Método utilizado para criar uma ApiKey.
+         *
+         * @param string $method Metodo de criptografia. (Default: aes-256-cbc)
+         * @param string $permission Permissões para criação da chave.
+         * @param int $limitCount Limite de usos para a Api. (-1: Ilimitado.)
+         * @param string $expire Data para expirar a api. (Se $limitcount = -1, será ignorado)
+         *
+         * @return object
+         */
+        public function createApiKey($method, $permission, $limitCount, $expire)
+        {
+            // Time para geração da api.
+            $time = time();
+
+            // Calculo para gerar a chave de api do usuário.
+            $apiKey = hash_hmac('md5', uniqid(), $this->simpleXmlHnd->openSslSettings->password . $time);
+
+            // Calcula a chave de criptografia do client.
+            $clientCrypt = $this->getClientKey($time);
+
+            // Dados para criação da chave de api.
+            $params = array(
+                ':ApiKey' => $apiKey,
+                ':ApiPassMethod' => $method,
+                ':ApiKeyCreated' => $time,
+                ':ApiPermission' => $permission,
+                ':ApiExpires' => $expire,
+                ':ApiLimitCount' => (($limitCount == -1 or is_null($limitCount)) ? 0:$limitCount),
+                ':ApiUnlimitedCount' => (($limitCount == -1) ? "true":"false")
+            );
+
+            // Executa a query no banco de dados de crição da api key. Caso retornado com sucesso, retorna a reposta
+            //  com os dados de criação da key.
+            return (($this->querySql($this->getPdoServer(), QUERY_INSERT_APIKEY, $params, true) > 0) ?
+                (object)array(
+                    'apiKey' => $apiKey,
+                    'apiMethod' => $method,
+                    'publicKey' => $clientCrypt
+                ):false);
         }
 
         /**
@@ -512,9 +565,9 @@ namespace brAWebServer
             $this->halt($status, $this->returnString(json_encode((object)array(
                 'code' => $status,
                 'message' => $message,
-                'messageHash' => hash('sha512', $message . $time),
+                'messageHash' => hash_hmac('sha512', $message, $time),
                 'json' => $object,
-                'jsonHash' => hash('sha512', $object . $time),
+                'jsonHash' => hash_hmac('sha512', $object, $time),
                 'time' => $time
             ))));
         }

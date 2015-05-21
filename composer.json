@@ -1,0 +1,8 @@
+{
+    "config": {
+        "vendor-dir": "_dependences"
+    },
+    "require": {
+        "slim/slim": "2.6.2"
+    }
+}

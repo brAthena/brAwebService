@@ -50,27 +50,6 @@ final class brAWebConfigLoad extends Slim\Middleware
                 $app->halt(405, 'Sistema em manutenção. (COD: 1)');
             }
             
-            // Obtém a chave de api enviada pelo usuário.
-            $apiKey = $app->request()->get('apiKey');
-            
-            // Realiza a validação a chave enviada pelo usuário.
-            if(!is_null($apiKey))
-            {
-                // Realiza os testes da chave api e já carrega as configurações para a chave.
-                // OBS.: Permissões e etc...
-                if(!$app->checkApiKey($apiKey))
-                {
-                    $app->halt(405, 'ApiKey fornecida é inválida. (COD: 2)');
-                }
-                // Informa que a chave API fornecida é válida.
-                $app->hasApiKey = true;
-            }
-            else
-            {
-                // Carrega as permissões padrões caso não haja chave.
-                $app->permissions = $app->config->Status->noKeyPermission;
-            }
-
             // Tenta realizar a conexão ao banco de dados do serviço e do ragnarok.
             try
             {
@@ -91,6 +70,38 @@ final class brAWebConfigLoad extends Slim\Middleware
                 $app->halt(405, $e->getMessage());
             }
 
+            // Obtém a chave de api enviada pelo usuário.
+            $apiKey = $app->request()->get('apiKey');
+            
+            // Realiza a validação a chave enviada pelo usuário.
+            if(!is_null($apiKey))
+            {
+                // Realiza os testes da chave api e já carrega as configurações para a chave.
+                // OBS.: Permissões e etc...
+                if(!$app->checkApiKey($apiKey))
+                {
+                    $app->halt(405, 'ApiKey fornecida é inválida. (COD: 2)');
+                }
+                // Informa que a chave API fornecida é válida.
+                $app->hasApiKey = true;
+                
+                // Realiza os testes para saber se será forçado o uso de criptografia.
+                // Caso forçado, retornará como a versão anterior do sistema, porém com modificações na biblioteca
+                //  de criptografia. [Atualizar, brAWebClient]
+                if($app->config->SecureData->force === false)
+                {
+                    $secure = $app->request()->get('secure');
+                    $app->config->SecureData->force = (is_null($secure) === false
+                                                    && filter_var($secure, FILTER_VALIDATE_BOOLEAN) === true);
+                }
+            }
+            else
+            {
+                // Carrega as permissões padrões caso não haja chave.
+                $app->permissions = $app->config->Status->noKeyPermission;
+            }
+
+            // Passa para o próximo call.
             $this->next->call();
         }
         catch(\Slim\Exception\Stop $e)

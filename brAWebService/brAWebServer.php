@@ -44,7 +44,13 @@ final class brAWebServer extends Slim\Slim
      * @var object
      */
     public $config;
-    
+
+    /**
+     * Objeto da apikey.
+     * @var object
+     */
+    public $apikey;
+
     /**
      * Informa se o usuário enviou uma chave válida para o servidor.
      * @var boolean
@@ -104,10 +110,12 @@ final class brAWebServer extends Slim\Slim
     {
         // Carrega o arquivo de configuração.
         $this->config = json_decode(json_encode(parse_ini_file(dirname(__FILE__) . '/../config.ini', true)));
-        
+ 
         // Faz o parse completo de algumas configurações especiais que precisem de tratamento para ser utilizadas.
         // As demais já foram tratadas acima.
         $this->config->Status->maintence = filter_var($this->config->Status->maintence, FILTER_VALIDATE_BOOLEAN);
+        $this->config->SecureData->enabled = filter_var($this->config->SecureData->enabled, FILTER_VALIDATE_BOOLEAN);
+        $this->config->SecureData->force = filter_var($this->config->SecureData->force, FILTER_VALIDATE_BOOLEAN);
     }
     
     /**
@@ -125,10 +133,45 @@ final class brAWebServer extends Slim\Slim
     /**
      * Método utilizado para realizar uma verificação da apiKey do usuário e obter as permissões.
      *
+     * @param string $apiKey Chave de api para uso.
+     *
+     * @return boolean Verdadeiro caso chave esteja ok.
      */
     public function checkApiKey($apiKey)
     {
-        return false;
+        $stmt = $this->pdoServer->prepare('
+            SELECT
+                *
+            FROM
+                apikeys
+            WHERE
+                ApiKey = :ApiKey AND
+                ApiKeyEnabled = true AND
+                (ApiKeyExpires IS NULL OR ApiKeyExpires > NOW()) AND
+                (ApiKeyUsedLimit = -1 OR ApiKeyUsedCount < ApiKeyUsedLimit) AND
+                ApiKeyDtCanceled IS NULL
+        ');
+        $stmt->execute(array(
+            ':ApiKey' => $apiKey
+        ));
+        
+        $this->apikey = $stmt->fetchObject();
+        
+        if($this->apikey === false)
+            return false;
+        
+        $stmt = $this->pdoServer->prepare('UPDATE apikeys SET ApiKeyUsedCount = ApiKeyUsedCount + 1 WHERE ApiKeyID = :ApiKeyID');
+        $stmt->execute(array(
+            ':ApiKeyID' => $this->apikey->ApiKeyID
+        ));
+        
+        // Carrega o objeto de criptografia para a API.
+        $this->apikey->crypt = new MCrypt($this->apikey->ApiCryptKey, $this->apikey->ApiCryptIV,
+                                            $this->apikey->ApiCryptCipher, $this->apikey->ApiCryptMethod);
+        
+        $this->permissions = $this->apikey->ApiPermission;
+
+        return true;
     }
     
     /**
@@ -136,10 +179,30 @@ final class brAWebServer extends Slim\Slim
      */
     public function halt($status, $message = '', array $data = array())
     {
-        parent::halt($status, json_encode(array_merge(array(
+        parent::halt($status, $this->parseReturn(array_merge(array(
             'status' => $status,
             'message' => utf8_encode(htmlentities($message))
         ), $data)));
+    }
+    
+    /**
+     * Transforma a string recebida no retorno para a chave api.
+     *
+     * @param array $data Dados para retorno.
+     *
+     * @return string String de retorno.
+     */
+    public function parseReturn(array $data = array())
+    {
+        $sReturn = json_encode($data);
+        
+        if($this->config->SecureData->enabled === true && $this->hasApiKey === true 
+            && $this->config->SecureData->force === true)
+        {
+            $sReturn = $this->apikey->crypt->encrypt($sReturn);
+        }
+        
+        return $sReturn;
     }
 }
 

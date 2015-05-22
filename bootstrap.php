@@ -37,5 +37,5 @@ catch(Exception $ex)
 }
 
 // Inicializa o serviço do server.
-$service = new brAWebService\brAWebServer(  );
+$service = new brAWebService\brAWebServer();
 $service->run();

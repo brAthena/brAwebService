@@ -66,16 +66,19 @@ final class brAWebServer extends Slim\Slim
     /**
      * @see \Slim\Slim::__construct()
      */
-    public function __construct(array $userSettings = array())
+    public function __construct($bInstallMode = false, array $userSettings = array())
     {
         // Invoca o construtor do slim.
         parent::__construct($userSettings);
 
-        // Adiciona o middleware para os conteudos.
-        $this->add(new \Slim\Middleware\ContentTypes());
-        $this->add(new brAWebConfigLoad());     // <- Executa as validações e atribuições para carregar permissões de acesso
-                                                //    e etc...
-        $this->add(new brAWebConfigRoutes());
+        if($bInstallMode === false)
+        {
+            // Adiciona o middleware para os conteudos.
+            $this->add(new \Slim\Middleware\ContentTypes());
+            $this->add(new brAWebConfigLoad());     // <- Executa as validações e atribuições para carregar permissões de acesso
+                                                    //    e etc...
+            $this->add(new brAWebConfigRoutes());
+        }
     } /* fim - public function __construct(array $userSettings = array()) */
 
     /**
@@ -141,14 +144,18 @@ final class brAWebServer extends Slim\Slim
     {
         $stmt = $this->pdoServer->prepare('
             SELECT
-                *
+                apikeys.*
             FROM
                 apikeys
+            LEFT JOIN
+                apikeys_day on (apikeys_day.ApiKeyID = apikeys.ApiKeyID AND
+                                apikeys_day.ApiKeyDay = CURDATE())
             WHERE
                 ApiKey = :ApiKey AND
                 ApiKeyEnabled = true AND
                 (ApiKeyExpires IS NULL OR ApiKeyExpires > NOW()) AND
                 (ApiKeyUsedLimit = -1 OR ApiKeyUsedCount < ApiKeyUsedLimit) AND
+                (ApiKeyUsedDayLimit = -1 OR ifnull(apikeys_day.UsedCount, 0) < ApiKeyUsedDayLimit) AND
                 ApiKeyDtCanceled IS NULL
         ');
         $stmt->execute(array(
@@ -160,7 +167,25 @@ final class brAWebServer extends Slim\Slim
         if($this->apikey === false)
             return false;
         
-        $stmt = $this->pdoServer->prepare('UPDATE apikeys SET ApiKeyUsedCount = ApiKeyUsedCount + 1 WHERE ApiKeyID = :ApiKeyID');
+        $stmt = $this->pdoServer->prepare('
+            INSERT INTO apikeys_day VALUES (:ApiKeyID, CURDATE(), 1)
+            ON DUPLICATE KEY UPDATE UsedCount = UsedCount + 1
+        ');
+        $stmt->execute(array(
+            ':ApiKeyID' => $this->apikey->ApiKeyID
+        ));
+        
+        $stmt = $this->pdoServer->prepare('
+            UPDATE
+                apikeys
+            INNER JOIN
+                apikeys_day ON (apikeys_day.ApiKeyID = apikeys.ApiKeyID AND
+                                    apikeys_day.ApiKeyDay = CURDATE())
+            SET
+                apikeys.ApiKeyUsedCount = ApiKeyUsedCount + 1,
+                apikeys.ApiKeyUsedDay = apikeys_day.UsedCount
+            WHERE
+                apikeys.ApiKeyID = :ApiKeyID');
         $stmt->execute(array(
             ':ApiKeyID' => $this->apikey->ApiKeyID
         ));
@@ -201,8 +226,20 @@ final class brAWebServer extends Slim\Slim
         {
             $sReturn = $this->apikey->crypt->encrypt($sReturn);
         }
-        
+
         return $sReturn;
+    }
+
+    /**
+     * Gera uma nova chave de api aleatóriamente.
+     *
+     * @static
+     *
+     * @return string Nova chave api unica.
+     */
+    public static function generateNewApiKey()
+    {
+        return crypt(uniqid(microtime(true), true));
     }
 }
 

@@ -80,7 +80,7 @@ final class brAWebConfigLoad extends Slim\Middleware
                 // OBS.: Permissões e etc...
                 if(!$app->checkApiKey($apiKey))
                 {
-                    $app->halt(405, 'ApiKey fornecida é inválida. (COD: 2)');
+                    $app->halt(405, 'ApiKey fornecida é inválida ou atingiu o limite de requisições diárias. (COD: 2)');
                 }
                 // Informa que a chave API fornecida é válida.
                 $app->hasApiKey = true;

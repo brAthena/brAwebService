@@ -82,6 +82,7 @@ final class brAWebConfigLoad extends Slim\Middleware
                 {
                     $app->halt(405, 'ApiKey fornecida é inválida ou atingiu o limite de requisições diárias. (COD: 2)');
                 }
+
                 // Informa que a chave API fornecida é válida.
                 $app->hasApiKey = true;
                 

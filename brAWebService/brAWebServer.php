@@ -205,7 +205,7 @@ final class brAWebServer extends Slim\Slim
     {
         parent::halt($status, $this->parseReturn(array_merge(array(
             'status' => $status,
-            'message' => utf8_encode(htmlentities($message)),
+            'message' => utf8_encode($message),
         ), $data)));
     }
     

@@ -14,10 +14,9 @@ CREATE TABLE `apikeys` (
     `ApiKeyUsedDay` INTEGER NOT NULL DEFAULT 0,
     `ApiKeyUsedDayLimit` INTEGER NOT NULL DEFAULT 5000,
     `ApiKeyDtCanceled` DATETIME NULL DEFAULT NULL,
-    `ApiCryptKey` VARCHAR(128) NOT NULL,
-    `ApiCryptIV` VARCHAR(128) NOT NULL,
-    `ApiCryptCipher` VARCHAR(50) NOT NULL DEFAULT 'rijndael-256',
-    `ApiCryptMethod` VARCHAR(10) NOT NULL DEFAULT 'cbc',
+    `ApiKeyPrivateKey` TEXT NOT NULL,
+    `ApiKeyPassword` VARCHAR(50) NOT NULL DEFAULT '',
+    `ApiKeyX509` TEXT NOT NULL,
     `ApiPermission` CHAR(20) NOT NULL DEFAULT '00000000000000000000',
     UNIQUE INDEX (`ApiKey`)
 ) ENGINE=MyISAM;

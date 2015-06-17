@@ -191,8 +191,7 @@ final class brAWebServer extends Slim\Slim
         ));
         
         // Carrega o objeto de criptografia para a API.
-        $this->apikey->crypt = new MCrypt($this->apikey->ApiCryptKey, $this->apikey->ApiCryptIV,
-                                            $this->apikey->ApiCryptCipher, $this->apikey->ApiCryptMethod);
+        $this->apikey->crypt = new OpenSSLServer($this->apikey->ApiKeyPrivateKey, $this->ApiKeyPassword, $this->ApiKeyX509);
         
         $this->permissions = $this->apikey->ApiPermission;
 
@@ -206,7 +205,7 @@ final class brAWebServer extends Slim\Slim
     {
         parent::halt($status, $this->parseReturn(array_merge(array(
             'status' => $status,
-            'message' => utf8_encode(htmlentities($message))
+            'message' => utf8_encode(htmlentities($message)),
         ), $data)));
     }
     
@@ -221,10 +220,17 @@ final class brAWebServer extends Slim\Slim
     {
         $sReturn = json_encode($data);
         
+        // Faz a assinatura e criptografa os dados de retorno.
         if($this->config->SecureData->enabled === true && $this->hasApiKey === true 
             && $this->config->SecureData->force === true)
         {
-            $sReturn = $this->apikey->crypt->encrypt($sReturn);
+            $aSigned = $this->apikey->crypt->encrypt($sReturn);
+            $data['signature'] = $aSigned['signature'];
+            $data['digest'] = $aSigned['digest'];
+            
+            $sTmpReturn = json_encode($data);
+            $aData = $this->apikey->crypt->encrypt($sTmpReturn);
+            $sReturn = $aData['crypted'];
         }
 
         return $sReturn;

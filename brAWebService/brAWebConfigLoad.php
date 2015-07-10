@@ -72,13 +72,16 @@ final class brAWebConfigLoad extends Slim\Middleware
 
             // Obtém a chave de api enviada pelo usuário.
             $apiKey = $app->request()->get('apiKey');
+            // Obtém o código único da aplicação que está fazendo uso da apikey.
+            $appKey = $app->request()->get('applicationKey');
             
             // Realiza a validação a chave enviada pelo usuário.
-            if(!is_null($apiKey))
+            // [10/07/2015] CHLFZ: Adicionado verificação da appKey.
+            if(!is_null($apiKey) && !is_null($appKey))
             {
                 // Realiza os testes da chave api e já carrega as configurações para a chave.
                 // OBS.: Permissões e etc...
-                if(!$app->checkApiKey($apiKey))
+                if(!$app->checkApiKey($apiKey, $appKey))
                 {
                     $app->halt(405, 'ApiKey fornecida é inválida ou atingiu o limite de requisições diárias. (COD: 2)');
                 }

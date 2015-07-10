@@ -140,27 +140,40 @@ final class brAWebServer extends Slim\Slim
      *
      * @return boolean Verdadeiro caso chave esteja ok.
      */
-    public function checkApiKey($apiKey)
+    public function checkApiKey($apiKey, $appKey)
     {
         $stmt = $this->pdoServer->prepare('
             SELECT
                 apikeys.*
             FROM
+                application
+            left join
+                application_allowed_address
+                    on (application_allowed_address.ApplicationID = application.ApplicationID)
+            inner join
                 apikeys
-            LEFT JOIN
-                apikeys_day on (apikeys_day.ApiKeyID = apikeys.ApiKeyID AND
-                                apikeys_day.ApiKeyDay = CURDATE())
-            WHERE
-                ApiKey = :ApiKey AND
-                ApiKeyEnabled = true AND
-                (ApiKeyExpires IS NULL OR ApiKeyExpires > NOW()) AND
-                (ApiKeyUsedLimit = -1 OR ApiKeyUsedCount < ApiKeyUsedLimit) AND
-                (ApiKeyUsedDayLimit = -1 OR ifnull(apikeys_day.UsedCount, 0) < ApiKeyUsedDayLimit) AND
-                ApiKeyDtCanceled IS NULL
+                    on (apikeys.ApiKeyID = application.ApiKeyID)
+            left join
+                apikeys_day
+                    on (apikeys_day.ApiKeyID = apikeys.ApiKeyID and
+                            apikeys_day.ApiKeyDay = CURDATE())
+            where
+                application.ApplicationKey = :AppKey and
+                apikeys.ApiKey = :ApiKey and
+                apikeys.ApiKeyEnabled = true and
+                (apikeys.ApiKeyExpires is null or apikeys.ApiKeyExpires > NOW()) and
+                (apikeys.ApiKeyUsedLimit = -1 or apikeys.ApiKeyUsedCount < apikeys.ApiKeyUsedLimit) and
+                (apikeys.ApiKeyUsedDayLimit = -1 or ifnull(apikeys_day.UsedCount, 0) < apikeys.ApiKeyUsedDayLimit) and
+                application.ApplicationBlocked = false and
+                (application.ApplicationAllowFromAll = true or
+                    application.ApplicationAllowFromAll = false and application_allowed_address.Address = :Address)
         ');
-        $stmt->execute(array(
-            ':ApiKey' => $apiKey
-        ));
+
+        $stmt->execute([
+            ':AppKey' => $appKey,
+            ':ApiKey' => $apiKey,
+            ':Address' => $this->request()->getIp()
+        ]);
         
         $this->apikey = $stmt->fetchObject();
         

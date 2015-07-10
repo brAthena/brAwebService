@@ -46,13 +46,13 @@ final class OpenSSLServer
         // Obtém informações sobre a chave privada.
         $pk = openssl_pkey_get_private($privateKey, $passphrase);
         
-        // Verifica se a chave privada pertence ao certificado indicado.
+        /*// Verifica se a chave privada pertence ao certificado indicado.
         if(openssl_x509_check_private_key($x509, $pk) === false)
         {
             throw new \Exception('O Certificado digital não pode ser validado contra a chave privada.');
         }
         
-        $this->privateKeyRes = $pk;
+        $this->privateKeyRes = $pk;*/
     }
 
     /**

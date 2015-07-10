@@ -220,7 +220,7 @@ final class brAWebServer extends Slim\Slim
     {
         $sReturn = json_encode($data);
         
-        // Faz a assinatura e criptografa os dados de retorno.
+        /*// Faz a assinatura e criptografa os dados de retorno.
         if($this->config->SecureData->enabled === true && $this->hasApiKey === true 
             && $this->config->SecureData->force === true)
         {
@@ -231,7 +231,7 @@ final class brAWebServer extends Slim\Slim
             $sTmpReturn = json_encode($data);
             $aData = $this->apikey->crypt->encrypt($sTmpReturn);
             $sReturn = $aData['crypted'];
-        }
+        }*/
 
         return $sReturn;
     }

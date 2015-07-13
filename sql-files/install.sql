@@ -53,3 +53,20 @@ CREATE TABLE `application_allowed_address` (
     CONSTRAINT FOREIGN KEY (`ApplicationID`) REFERENCES `application` (`ApplicationID`) ON DELETE RESTRICT,
     PRIMARY KEY (`AddressID`, `ApplicationID`)
 ) ENGINE=INNODB;
+
+DROP TABLE IF EXISTS `server_status`;
+CREATE TABLE `server_status` (
+    `StatusID` INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `loginAddress` VARCHAR(50) NOT NULL DEFAULT 'localhost',
+    `loginPort`  SMALLINT(5) UNSIGNED NOT NULL DEFAULT 6900,
+    `loginStatus` BOOLEAN NOT NULL DEFAULT false,
+    `charAddress` VARCHAR(50) NOT NULL DEFAULT 'localhost',
+    `charPort` SMALLINT(5) UNSIGNED NOT NULL DEFAULT 6121,
+    `charStatus` BOOLEAN NOT NULL DEFAULT false,
+    `mapAddress` VARCHAR(50) NOT NULL DEFAULT 'localhost',
+    `mapPort` SMALLINT(5) UNSIGNED NOT NULL DEFAULT 5121,
+    `mapStatus` BOOLEAN NOT NULL DEFAULT false,
+    `lastCheck` INTEGER UNSIGNED NOT NULL DEFAULT 0,
+    `nextCheck` INTEGER UNSIGNED NOT NULL DEFAULT 0,
+    INDEX (`nextCheck`)
+) ENGINE=MyISAM;

@@ -126,10 +126,71 @@ final class brAWebServer extends Slim\Slim
      */
     public function checkServerStatus()
     {
+        // Query para verificar se existem lançamentos no banco de dados
+        //  do status do servidor. (Cache temporario de verificação, se não da problema de DDOS na porta do emulador)
+        $ds_status = $this->pdoServer->query('
+            SELECT
+                loginStatus,
+                charStatus,
+                mapStatus,
+                lastCheck,
+                nextCheck
+            FROM
+                server_status
+            WHERE
+                nextCheck >= UNIX_TIMESTAMP(NOW())
+        ');
+        $rs_status = $ds_status->fetchObject();
+
+        // Caso não encontre os dados para a consulta, então inicia o teste para as portas do servidor e ip.
+        if($rs_status === false)
+        {
+            // Realiza a tentativa de abrir uma conexão com as portas do servidor.
+            $login = @fsockopen($this->config->RagnarokServer->loginAddress, $this->config->RagnarokServer->loginPort);
+            $char = @fsockopen($this->config->RagnarokServer->charAddress, $this->config->RagnarokServer->charPort);
+            $map = @fsockopen($this->config->RagnarokServer->mapAddress, $this->config->RagnarokServer->mapPort);
+            // Prepara a query para inserir os dados de status do servidor no banco de dados.
+            $stmt_status = $this->pdoServer->prepare('
+                INSERT INTO server_status
+                VALUES (NULL,
+                        :loginAddress, :loginPort, :loginStatus,
+                        :charAddress, :charPort, :charStatus,
+                        :mapAddress, :mapPort, :mapStatus,
+                        UNIX_TIMESTAMP(),
+                        UNIX_TIMESTAMP(NOW()) + :nextCheck )
+            ');
+            // Informa os dados que serão inseridos no banco de dados para futuras auditorias e funcionalidades.
+            $stmt_status->execute([
+                ':loginAddress' => $this->config->RagnarokServer->loginAddress,
+                ':loginPort' => $this->config->RagnarokServer->loginPort,
+                ':loginStatus' => (($login === false) ? 0:1),
+                ':charAddress' => $this->config->RagnarokServer->charAddress,
+                ':charPort' => $this->config->RagnarokServer->charPort,
+                ':charStatus' => (($char === false) ? 0:1),
+                ':mapAddress' => $this->config->RagnarokServer->mapAddress,
+                ':mapPort' => $this->config->RagnarokServer->mapPort,
+                ':mapStatus' => (($map === false) ? 0:1),
+                ':nextCheck' => $this->config->RagnarokServer->checkInterval
+            ]);
+            // Caso tenha aberto os ponteiros de verificação, encerra os mesmos para não
+            //  manter a conexão aberta com o server e sobre-carregar.
+            if($login) fclose($login);
+            if($char) fclose($char);
+            if($map) fclose($map);
+
+            // Refaz a query de consulta que agora terá os dados no banco.
+            $this->checkServerStatus();
+            return;
+        }
+        // Retorna as informações de status do servidor, com informações da próxima verificação
+        //  e quando foi verificado.
         $this->halt(200, 'ok', array(
-            'map' => false,
-            'char' => false,
-            'login' => false
+            'map' => boolval($rs_status->mapStatus),
+            'char' => boolval($rs_status->charStatus),
+            'login' => boolval($rs_status->loginStatus),
+            'lastCheck' => intval($rs_status->lastCheck),
+            'nextCheck' => intval($rs_status->nextCheck),
+            'now' => time()
         ));
     }
     

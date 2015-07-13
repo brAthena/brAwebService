@@ -122,6 +122,66 @@ final class brAWebServer extends Slim\Slim
     }
     
     /**
+     * Verifica se os dados informados podem realizar login.
+     *
+     * @param string $userid Nome de usuário para login.
+     * @param string $user_pass Senha para realizar o login.
+     *
+     * @return mixed Retorna falso caso não possa ou um objeto com informações login.
+     */
+    private function checkUserPass($userid, $user_pass)
+    {
+        $ds_login = $this->pdoRagna->prepare('
+            SELECT
+                account_id,
+                userid,
+                sex,
+                birthdate,
+                logincount,
+                unban_time
+            FROM
+                login
+            WHERE
+                userid = :userid AND
+                user_pass = :user_pass AND
+                group_id < :group_id AND
+                state = 0
+        ');
+        $ds_login->execute([
+            ':userid' => $userid,
+            ':user_pass' => $user_pass,
+            ':group_id' => $this->config->AccountLogin->maxLevel
+        ]);
+
+        return $ds_login->fetchObject();
+    }
+
+    /**
+     * Verifica se um nome de usuário já existe no banco de dados.
+     *
+     * @param string $userid Nome de usuário.
+     *
+     * @return boolean Caso verdadeiro, o nome de usuário já está cadastrado.
+     */
+    private function checkUserId($userid)
+    {
+        $ds_login = $this->pdoRagna->prepare('
+            SELECT
+                COUNT(*) as qtdeAcc
+            FROM
+                login
+            WHERE
+                userid = :userid
+        ');
+        $ds_login->execute([
+            ':userid' => $userid
+        ]);
+        $rs_login = $ds_login->fetchObject();
+
+        return $rs_login->qtdeAcc > 0;
+    }
+
+    /**
      * Verifica se o servidor está online e retorna os dados.
      */
     public function checkServerStatus()
@@ -134,7 +194,8 @@ final class brAWebServer extends Slim\Slim
                 charStatus,
                 mapStatus,
                 lastCheck,
-                nextCheck
+                nextCheck,
+                UNIX_TIMESTAMP(NOW()) as nowCheck
             FROM
                 server_status
             WHERE
@@ -156,7 +217,7 @@ final class brAWebServer extends Slim\Slim
                         :loginAddress, :loginPort, :loginStatus,
                         :charAddress, :charPort, :charStatus,
                         :mapAddress, :mapPort, :mapStatus,
-                        UNIX_TIMESTAMP(),
+                        UNIX_TIMESTAMP(NOW()),
                         UNIX_TIMESTAMP(NOW()) + :nextCheck )
             ');
             // Informa os dados que serão inseridos no banco de dados para futuras auditorias e funcionalidades.
@@ -190,7 +251,7 @@ final class brAWebServer extends Slim\Slim
             'login' => boolval($rs_status->loginStatus),
             'lastCheck' => intval($rs_status->lastCheck),
             'nextCheck' => intval($rs_status->nextCheck),
-            'now' => time()
+            'now' => intval($rs_status->nowCheck)
         ]);
     }
     

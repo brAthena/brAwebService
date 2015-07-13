@@ -120,7 +120,30 @@ final class brAWebServer extends Slim\Slim
         $this->config->SecureData->enabled = filter_var($this->config->SecureData->enabled, FILTER_VALIDATE_BOOLEAN);
         $this->config->SecureData->force = filter_var($this->config->SecureData->force, FILTER_VALIDATE_BOOLEAN);
     }
-    
+
+    /**
+     * Tenta realizar um login no acesso de usuário fornecido.
+     *
+     * @param string $userid Nome de usuário para verificação.
+     * @param string $user_pass Senha para o nome de usuário.
+     */
+    public function login($userid, $user_pass)
+    {
+        // Verifica se a conta pode realizar login.
+        // Caso não consiga:
+        //   1º - Nome de usuário e senha incorretos.
+        //   2º - Nivel de conta não pode acessar via service.
+        //   3º - A Conta está bloqueada para acesso.
+        if(($obj = $this->checkUserPass($userid, $user_pass)) === false)
+        {
+            $this->halt(404, 'Combinação de usuário e senha inválidos.');
+        }
+        else
+        {
+            return $obj;
+        }
+    }
+
     /**
      * Verifica se os dados informados podem realizar login.
      *
@@ -153,7 +176,7 @@ final class brAWebServer extends Slim\Slim
             ':group_id' => $this->config->AccountLogin->maxLevel
         ]);
 
-        return $ds_login->fetchObject();
+        return $ds_login->fetch(\PDO::FETCH_ASSOC);
     }
 
     /**

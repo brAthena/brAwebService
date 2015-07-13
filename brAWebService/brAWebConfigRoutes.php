@@ -42,6 +42,23 @@ final class brAWebConfigRoutes extends Slim\Middleware
         $app->defineRoute('get', '/status/', '10000000000000000000', function() {
             brAWebServer::getInstance()->checkServerStatus();
         });
+
+        // Define a rota para realizar login no sistema.
+        $app->defineRoute('get', '/login/', '11000000000000000000', function() {
+            // Obtém a instância do APP global.
+            $app = brAWebServer::getInstance();
+
+            // Obtém os dados enviados para a requisição.
+            $userid = $app->request()->get('userid');
+            $user_pass = $app->request()->get('user_pass');
+
+            // Caso realize o login com sucesso, retorna os dados do login e mensagem de sucesso.
+            // OBS.: A Mensagem de erro já acontece durante o teste do método.
+            if(($obj = $app->login($userid, $user_pass)))
+            {
+                $app->halt(200, 'Login realizado com sucesso.', $obj);
+            }
+        });
         
         // Run inner middleware and application
         $this->next->call();

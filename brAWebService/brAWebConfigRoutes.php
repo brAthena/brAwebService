@@ -59,6 +59,25 @@ final class brAWebConfigRoutes extends Slim\Middleware
                 $app->halt(200, 'Login realizado com sucesso.', $obj);
             }
         });
+
+        // Rota para criação de uma nova chave de api com todas as informações de certificado.
+        $app->defineRoute('get', '/apikey/create/', '11000000000000000001', function() {
+            $app = brAWebServer::getInstance();
+            // Obtém os parametros para 
+            $appName = $app->request()->get('appName');
+            $permission = $app->request()->get('permission');
+            $useLimit = $app->request()->get('useLimit');
+            $useDayLimit = $app->request()->get('useDayLimit');
+            $allowAll = boolval($app->request()->get('allowAll'));
+            $ipAllowed = $app->request()->get('ipAllowed');
+
+            // Caso o teste para crição da chave retorne verdadeiro, retorna os dados.
+            // OBS.: O Teste erro já está no método.
+            if(($obj = $app->createApiKey($appName, $permission, $useLimit, $useDayLimit, $allowAll, $ipAllowed)))
+            {
+                $app->halt(200, 'Chave de api gerada com sucesso.', $obj);
+            }
+        });
         
         // Run inner middleware and application
         $this->next->call();

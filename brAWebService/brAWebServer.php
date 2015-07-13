@@ -122,6 +122,86 @@ final class brAWebServer extends Slim\Slim
     }
 
     /**
+     * Método utilizado para criação de uma nova chave de api para uma aplicação.
+     *
+     * @param string $appName Nome da aplicação a ser criada.
+     * @param string $permission Permissão da aplicação.
+     * @param bool $allowAll Permissão para saber se irá habilitar todos os ips para a api.
+     * @param string $ipAllowed String em base64 caso $allowAll = 'false'
+     *
+     * @return mixed Caso não gere, retorna falso.
+     */
+    public function createApiKey($appName, $permission, $useLimit, $useDayLimit, $allowAll, $ipAllowed)
+    {
+        // Gera o novo código da api.
+        $apiKey = self::generateNewApiKey();
+        // Dados de criptografia e certificado digital.
+        $certificate = OpenSSLServer::newCertificate();
+
+        // Prepara a query para a nova chave de api.
+        $stmt = $this->pdoServer->prepare('
+            INSERT INTO apikeys
+            VALUES (NULL, :ApiKey, 1, NOW(), NULL, 0, :ApiKeyUsedLimit, 0, :ApiKeyUsedDayLimit, NULL,
+                :ApiKeyPrivateKey, :ApiKeyPassword, :ApiKeyX509, :ApiPermission)
+        ');
+
+        // Executa a query para gerar a nova chave de api.
+        $stmt->execute([
+            ':ApiKey' => $apiKey,
+            ':ApiKeyUsedLimit' => $useLimit,
+            ':ApiKeyUsedDayLimit' => $useDayLimit,
+            ':ApiKeyPrivateKey' => $certificate['privateKey'],
+            ':ApiKeyPassword' => $certificate['passphrase'],
+            ':ApiKeyX509' => $certificate['x509'],
+            ':ApiPermission' => $permission
+        ]);
+
+        // Obtém o código para os dados do banco.
+        $ApiKeyID = $this->pdoServer->lastInsertId();
+
+        // Obtém um novo código para aplicação.
+        $AppKey = self::generateNewAppKey();
+
+        // Cria a query para inserir uma nova aplicação no banco de dados.
+        $stmt = $this->pdoServer->prepare('
+            INSERT INTO application
+            VALUES (NULL, :Application, :ApplicationKey, NOW(), :ApplicationAllowFromAll, false, NULL, :ApiKeyID)
+        ');
+        $stmt->execute([
+            ':Application' => $appName,
+            ':ApplicationKey' => $AppKey,
+            ':ApplicationAllowFromAll' => (($allowAll === false) ? 0:1),
+            ':ApiKeyID' => $ApiKeyID
+        ]);
+
+        // Obtém o código da aplicação.
+        $ApplicationID = $this->pdoServer->lastInsertId();
+
+        // Caso não esteja habilitada para uso por todos, então,
+        //  adiciona ao banco de dados, todos os endereços ips.
+        if($allowAll === false)
+        {
+            foreach(explode(',', base64_decode($ipAllowed)) as $sIp)
+            {
+                $stmt = $this->pdoServer->prepare('
+                    INSERT INTO application_allowed_address
+                    VALUES (:ApplicationID, NULL, :Address, CURDATE())
+                ');
+                $stmt->execute([
+                    ':ApplicationID' => $ApplicationID,
+                    ':Address' => $sIp
+                ]);
+            }
+        }
+
+        return [
+            'apiKey' => $apiKey,
+            'applicationKey' => $AppKey,
+            'x509' => $certificate['x509']
+        ];
+    }
+
+    /**
      * Tenta realizar um login no acesso de usuário fornecido.
      *
      * @param string $userid Nome de usuário para verificação.
@@ -403,7 +483,19 @@ final class brAWebServer extends Slim\Slim
      */
     public static function generateNewApiKey()
     {
-        return crypt(uniqid(microtime(true), true));
+        return @crypt(uniqid(microtime(true), true));
+    }
+
+    /**
+     * Gera a nova chave de app.
+     *
+     * @static
+     *
+     * @return string Código da chave de aplicação.
+     */
+    public static function generateNewAppKey()
+    {
+        return hash('md5', uniqid(microtime(true), true));
     }
 }
 

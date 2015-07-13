@@ -50,9 +50,9 @@ final class OpenSSLServer
         if(openssl_x509_check_private_key($x509, $pk) === false)
         {
             throw new \Exception('O Certificado digital não pode ser validado contra a chave privada.');
-        }
+        }*/
         
-        $this->privateKeyRes = $pk;*/
+        $this->privateKeyRes = $pk;
     }
 
     /**

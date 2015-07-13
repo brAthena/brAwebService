@@ -184,14 +184,14 @@ final class brAWebServer extends Slim\Slim
         }
         // Retorna as informações de status do servidor, com informações da próxima verificação
         //  e quando foi verificado.
-        $this->halt(200, 'ok', array(
+        $this->halt(200, 'ok', [
             'map' => boolval($rs_status->mapStatus),
             'char' => boolval($rs_status->charStatus),
             'login' => boolval($rs_status->loginStatus),
             'lastCheck' => intval($rs_status->lastCheck),
             'nextCheck' => intval($rs_status->nextCheck),
             'now' => time()
-        ));
+        ]);
     }
     
     /**
@@ -245,9 +245,9 @@ final class brAWebServer extends Slim\Slim
             INSERT INTO apikeys_day VALUES (:ApiKeyID, CURDATE(), 1)
             ON DUPLICATE KEY UPDATE UsedCount = UsedCount + 1
         ');
-        $stmt->execute(array(
+        $stmt->execute([
             ':ApiKeyID' => $this->apikey->ApiKeyID
-        ));
+        ]);
         
         $stmt = $this->pdoServer->prepare('
             UPDATE
@@ -260,9 +260,9 @@ final class brAWebServer extends Slim\Slim
                 apikeys.ApiKeyUsedDay = apikeys_day.UsedCount
             WHERE
                 apikeys.ApiKeyID = :ApiKeyID');
-        $stmt->execute(array(
+        $stmt->execute([
             ':ApiKeyID' => $this->apikey->ApiKeyID
-        ));
+        ]);
         
         // Carrega o objeto de criptografia para a API.
         $this->apikey->crypt = new OpenSSLServer($this->apikey->ApiKeyPrivateKey, $this->ApiKeyPassword, $this->ApiKeyX509);
@@ -277,10 +277,10 @@ final class brAWebServer extends Slim\Slim
      */
     public function halt($status, $message = '', array $data = array())
     {
-        parent::halt($status, $this->parseReturn(array_merge(array(
+        parent::halt($status, $this->parseReturn(array_merge([
             'status' => $status,
             'message' => utf8_encode($message),
-        ), $data)));
+        ], $data)));
     }
     
     /**
@@ -290,7 +290,7 @@ final class brAWebServer extends Slim\Slim
      *
      * @return string String de retorno.
      */
-    public function parseReturn(array $data = array())
+    public function parseReturn($data = [])
     {
         $sReturn = json_encode($data);
         

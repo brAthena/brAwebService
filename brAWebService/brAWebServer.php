@@ -122,6 +122,48 @@ final class brAWebServer extends Slim\Slim
     }
 
     /**
+     * Método utilizado para bloqueio de uma chave de api e aplicação.
+     *
+     * @param string $apiKey Chave de api para ser bloqueada.
+     * @param string $applicationKey Chave do app para ser bloqueado.
+     */
+    public function blockApiKey($apiKey, $applicationKey)
+    {
+        // Realiza a query de update para bloquear ambos os registros.
+        $stmt = $this->pdoServer->prepare('
+            UPDATE
+                application
+            INNER JOIN
+                apikeys
+                    ON (apikeys.ApiKeyID = application.ApiKeyID)
+            SET
+                application.ApplicationBlocked = true,
+                application.ApplicationDtBlocked = CURDATE(),
+                apikeys.ApiKeyDtCanceled = NOW()
+            WHERE
+                application.ApplicationBlocked = false AND
+                application.ApplicationDtBlocked is null AND
+                apikeys.ApiKeyDtCanceled is null AND
+                apikeys.ApiKey = :ApiKey AND
+                application.ApplicationKey = :ApplicationKey;
+        ');
+        $stmt->execute([
+            ':ApiKey' => $apiKey,
+            ':ApplicationKey' => $applicationKey
+        ]);
+        // Caso nenhum registro seja afetado, significa que nada foi encontrado e nada pode
+        //  ser cancelado/desativado/bloqueado.
+        if($stmt->rowCount() == 0)
+        {
+            $this->halt(401, 'Não foi possível bloquear a chave de api e a aplicação.');
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    /**
      * Método utilizado para criação de uma nova chave de api para uma aplicação.
      *
      * @param string $appName Nome da aplicação a ser criada.
@@ -199,6 +241,78 @@ final class brAWebServer extends Slim\Slim
             'applicationKey' => $AppKey,
             'x509' => $certificate['x509']
         ];
+    }
+
+    /**
+     * Método utilizado para tentar realizar uma alteração de senha.
+     *
+     * @param string $userid Nome de usuário para alteração da senha.
+     * @param string $user_pass Senha atual do usuário para alteração.
+     * @param string $new_password Nova senha que será utilizada para o usuário.
+     *
+     * @return boolean Retorna verdadeiro caso tenha alterado com sucesso.
+     */
+    public function changePassword($userid, $user_pass, $new_password)
+    {
+        // É necessário estar logado para realizar esta mudança.
+        // Caso os dados estejam incorretos, será retornado 404. Veja: $this->login($userid, $user_pass)
+        $obj = $this->login($userid, $user_pass);
+
+        // Necessário este método pois caso seja necessário uma recuperação de conta
+        //  uma nova senha será gerada por ele.
+        return $this->updatePassword($obj['account_id'], $new_password, $user_pass);
+    }
+
+    /**
+     * Método utilizado para atualizar a senha de usuário no banco de dados.
+     *
+     * @param integer $account_id Código da conta que será atualizada.
+     * @param string $password Senha que será definida para o usuário.
+     * @param string $old_password Senha antiga. Caso definida fará parte do teste. Se não, será forçado a alteração.
+     *
+     * @return boolean Caso seja possivel alterar a senha, será retornado verdadeiro.
+     */
+    private function updatePassword($account_id, $password, $old_password = null)
+    {
+        // Verifica se a senha antiga foi enviada para o teste.
+        // Caso tenha sido, somente será alterada a senha do usuário caso a senha
+        //  antiga seja igual a senha atual e o account_id seja correspondente a senha.
+        if(is_null($old_password) === false)
+        {
+            $stmt = $this->pdoRagna->prepare('
+                update
+                    login
+                set
+                    user_pass = :user_pass
+                where
+                    account_id = :account_id and
+                    user_pass = :old_user_pass
+            ');
+            $stmt->execute([
+                ':user_pass' => $password,
+                ':account_id' => $account_id,
+                ':old_user_pass' => $old_password
+            ]);
+        }
+        else
+        {
+            // Caso a senha antiga não tenha sido enviada, então força a alteração da senha
+            //  de usuário para a nova senha enviada.
+            $stmt = $this->pdoServer->prepare('
+                update
+                    login
+                set
+                    user_pass = :user_pass
+                where
+                    account_id = :account_id
+            ');
+            $stmt->execute([
+                ':user_pass' => $password,
+                ':account_id' => $account_id
+            ]);
+        }
+
+        return $stmt->rowCount() > 0;
     }
 
     /**
@@ -428,9 +542,15 @@ final class brAWebServer extends Slim\Slim
             ':ApiKeyID' => $this->apikey->ApiKeyID
         ]);
         
-        // Carrega o objeto de criptografia para a API.
-        $this->apikey->crypt = new OpenSSLServer($this->apikey->ApiKeyPrivateKey, $this->ApiKeyPassword, $this->ApiKeyX509);
-        
+        try
+        {
+            // Carrega o objeto de criptografia para a API.
+            $this->apikey->crypt = new OpenSSLServer($this->apikey->ApiKeyPrivateKey, $this->apikey->ApiKeyPassword, $this->apikey->ApiKeyX509);
+        }
+        catch(\Exception $ex)
+        {
+            $this->halt(401, $ex->getMessage());
+        }
         $this->permissions = $this->apikey->ApiPermission;
 
         return true;

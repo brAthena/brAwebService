@@ -78,7 +78,7 @@ final class brAWebServer extends Slim\Slim
             $this->add(new \Slim\Middleware\ContentTypes());
 
             // O Slim usa conceito de pilha para execução dos middlewares adicionados,
-            //  então, necessário adicionar em forma inversa... [10/07/2015] CHLFZ
+            //  então, necessário adicionar em forma inversa... [03/09/2015] CHLFZ
             $this->add(new Middleware\brAWebConfigRequest());
             $this->add(new Middleware\brAWebConfigRoutes());
             $this->add(new Middleware\brAWebConfigSql());

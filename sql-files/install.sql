@@ -17,6 +17,38 @@ CREATE TABLE `apikeys` (
     `ApiKeyPrivateKey` TEXT NOT NULL,
     `ApiKeyPassword` VARCHAR(50) NOT NULL DEFAULT '',
     `ApiKeyX509` TEXT NOT NULL,
+    -- --------------------------------------------------------------------------------------------------------------- --
+    --  ******* É dividido em formato de 20 caracteres.
+    --  ******* Cada caractere representa uma permissão, ou seja, 20 tipos de permissões diferentes são permitidas.
+    --  ******* Cada permissão possui status: desligado ou ligado que são representadas por 0 ou 1, respectivamente.
+    --
+    -- Tabela de permissões e descrição para cada permissão. 
+    --
+    -- + --------- + ----------------------------------------------------------------------------------------- +
+    -- | Caractere | Descrição                                                                                 |
+    -- + --------- + ----------------------------------------------------------------------------------------- +
+    -- |         1 | ApiKey possui permissão de acesso ao webservice.                                          |
+    -- |         2 | Informa que é uma Apikey válida para requisições. Deve ser enviada via GET.               |
+    -- |         3 | 
+    -- |         4 | 
+    -- |         5 | 
+    -- |         6 | 
+    -- |         7 | 
+    -- |         8 | 
+    -- |         9 | 
+    -- |        10 | 
+    -- |        11 | 
+    -- |        12 | 
+    -- |        13 | 
+    -- |        14 | 
+    -- |        15 | 
+    -- |        16 | 
+    -- |        17 | 
+    -- |        18 | 
+    -- |        19 | Permite o bloequar de Apikeys.                                                            |
+    -- |        20 | Permite a crição de novas Apikeys.                                                        |
+    -- + --------- + ----------------------------------------------------------------------------------------- +
+    -- --------------------------------------------------------------------------------------------------------------- --
     `ApiPermission` CHAR(20) NOT NULL DEFAULT '00000000000000000000',
     UNIQUE INDEX (`ApiKey`)
 ) ENGINE=INNODB;

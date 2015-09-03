@@ -10,7 +10,7 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^ index.php [QSA,L]
 
-<FilesMatch "\.(xml|db)$">
+<FilesMatch "\.(xml|db|ini|json|lock|sql|md|yml|dist|markdown|gitignore)$">
     Order allow,deny
     Deny from all
     Satisfy All

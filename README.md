@@ -17,6 +17,7 @@ Durante o desenvolvimento do **brAWebService** foram utilizados:
     * Framework: [Slim Framework](http://www.slimframework.com/)
 
 Para versões PHP 5.3.x, você deve utilizar a v1.0.63-stable https://github.com/brAthena/brAwebService/releases/tag/v1.0.63-stable
+
 Para versões PHP 5.2.x, não existe versões disponíveis.
     
 ## Instalação

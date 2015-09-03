@@ -17,7 +17,7 @@
  * License along with this library.
  */
 
-namespace brAWebService;
+namespace brAWebService\Middleware;
 
 use Slim;
 
@@ -25,51 +25,16 @@ use Slim;
  * Classe para execução do Webserver local.
  * @final
  */
-final class brAWebConfigLoad extends Slim\Middleware
+final class brAWebConfigRequest extends Slim\Middleware
 {
     public function call()
     {
         // Obtém a instancia do app.
         $app = $this->app;
 
+        // Tenta realizar a conexão ao banco de dados do serviço e do ragnarok.
         try
         {
-            // Verifica se o arquivo de configuração, gerado pós instalação existe,
-            // se não existir, informa error.
-            if(file_exists(dirname(__FILE__) . '/../config.ini') === false)
-            {
-                $app->halt(405, 'Sistema em manutenção. (COD: 0)');
-            }
-
-            // Carrega o arquivo de configuração e define os parametros no service.
-            $app->loadConfig();
-            
-            // Verifica se o sistema está configurado para modo manutenção, se estiver, nega a conexão.
-            if($app->config->Status->maintence === true)
-            {
-                $app->halt(405, 'Sistema em manutenção. (COD: 1)');
-            }
-            
-            // Tenta realizar a conexão ao banco de dados do serviço e do ragnarok.
-            try
-            {
-                $app->pdoServer = new \PDO($app->config->SQLService->connectionString,
-                                           $app->config->SQLService->user,
-                                           $app->config->SQLService->pass, array(
-                                                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                                           ));
-                
-                $app->pdoRagna = new \PDO($app->config->SQLRagnarok->connectionString,
-                                           $app->config->SQLRagnarok->user,
-                                           $app->config->SQLRagnarok->pass, array(
-                                                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                                           ));
-            }
-            catch(\PDOException $e)
-            {
-                $app->halt(405, $e->getMessage());
-            }
-
             // Obtém a chave de api enviada pelo usuário.
             $apiKey = $app->request()->get('apiKey');
             // Obtém o código único da aplicação que está fazendo uso da apikey.

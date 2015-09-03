@@ -17,9 +17,10 @@
  * License along with this library.
  */
 
-namespace brAWebService;
+namespace brAWebService\Middleware;
 
 use Slim;
+use brAWebService;
 
 /**
  * Classe para execução do Webserver local.
@@ -35,18 +36,18 @@ final class brAWebConfigRoutes extends Slim\Middleware
         // Define o acesso a rota padrão para o sistema e retorna uma mensagem:
         //  code: 200, message: 'ok'
         $app->defineRoute('get', '/', '10000000000000000000', function() {
-            brAWebServer::getInstance()->halt(200, 'ok');
+            brAWebService\brAWebServer::getInstance()->halt(200, 'ok');
         });
         
         // Define a rota para teste de se o servidor está online.
         $app->defineRoute('get', '/status/', '10000000000000000000', function() {
-            brAWebServer::getInstance()->checkServerStatus();
+            brAWebService\brAWebServer::getInstance()->checkServerStatus();
         });
 
         // Define a rota para realizar login no sistema.
         $app->defineRoute('get', '/account/login/', '11000000000000000000', function() {
             // Obtém a instância do APP global.
-            $app = brAWebServer::getInstance();
+            $app = brAWebService\brAWebServer::getInstance();
 
             // Obtém os dados enviados para a requisição.
             $userid = $app->request()->get('userid');
@@ -63,7 +64,7 @@ final class brAWebConfigRoutes extends Slim\Middleware
         // Define a rota para alteração de senha.
         $app->defineRoute('post', '/account/password/change/', '11000000000000000000', function() {
             // Obtém a instância da aplicação.
-            $app = brAWebServer::getInstance();
+            $app = brAWebService\brAWebServer::getInstance();
 
             // Obtém os dados para realizar a alteração de senha.
             $userid = $app->request()->post('userid');
@@ -84,7 +85,7 @@ final class brAWebConfigRoutes extends Slim\Middleware
         // Rota para obter o certificado da chave de api.
         $app->defineRoute('get', '/apikey/certificate/', '11000000000000000000', function() {
             // Obtém a instância da aplicação.
-            $app = brAWebServer::getInstance();
+            $app = brAWebService\brAWebServer::getInstance();
 
             // Verifica se a apikey está definida e não vazia e se o certificado está definido.
             // Se estiver, retorna status 200.
@@ -102,7 +103,7 @@ final class brAWebConfigRoutes extends Slim\Middleware
 
         // Rota para bloquear uma chave de api e uma aplicação.
         $app->defineRoute('post', '/apikey/block/', '11000000000000000010', function() {
-            $app = brAWebServer::getInstance();
+            $app = brAWebService\brAWebServer::getInstance();
 
             // Ambas as informações devem estar vinculadas.
             $apiKey = $app->request()->post('apiKey');

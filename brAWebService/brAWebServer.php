@@ -20,6 +20,7 @@
 namespace brAWebService;
 
 use Slim;
+use brAWebService\Middleware;
 
 /**
  * Classe para execução do Webserver local.
@@ -75,9 +76,13 @@ final class brAWebServer extends Slim\Slim
         {
             // Adiciona o middleware para os conteudos.
             $this->add(new \Slim\Middleware\ContentTypes());
-            $this->add(new brAWebConfigLoad());     // <- Executa as validações e atribuições para carregar permissões de acesso
-                                                    //    e etc...
-            $this->add(new brAWebConfigRoutes());
+
+            // O Slim usa conceito de pilha para execução dos middlewares adicionados,
+            //  então, necessário adicionar em forma inversa... [10/07/2015] CHLFZ
+            $this->add(new Middleware\brAWebConfigRequest());
+            $this->add(new Middleware\brAWebConfigRoutes());
+            $this->add(new Middleware\brAWebConfigSql());
+            $this->add(new Middleware\brAWebConfigLoad());
         }
     } /* fim - public function __construct(array $userSettings = array()) */
 

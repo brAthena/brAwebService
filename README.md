@@ -18,7 +18,17 @@ Durante o desenvolvimento do **brAWebService** foram utilizados:
 
 ## Instalação
 
-*Comming soon...*
+### Observação
+Pelo linux, você deverá atribuir permissões de escrita e leitura ([chmod](https://pt.wikipedia.org/wiki/Chmod)) ao diretório do brAWebservice ao usuário que faz acesso a pasta. (Se você não fizer isso, não vai conseguir realizar a instalação do service)
+
+### Como Instalar
+Caso você tente acessar o brAWebservice antes de sua instalação, deverá obter a seguinte mensagem:
+***Arquivo de configuração não encontrado. Favor, re-instalar o sistema***
+
+Acesse via URL do navegador o arquivo **install.php**. Se você estiver usando localhost o seu URL deverá ser algo como **http://localhost/brAWebservice/install.php**
+
+*@TODO: Continuação da instalação (prints, explicação de todos os campos)*
+
 
 ## Resolvendo Problemas
 

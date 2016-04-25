@@ -1,0 +1,5 @@
+templates_c
+vendor
+/*.lock
+/config.php
+/*.cache

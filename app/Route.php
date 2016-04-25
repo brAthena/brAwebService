@@ -49,12 +49,19 @@ class Route
                     foreach($_BRAWS_SERVERS as $server)
                     {
                         // Abre a porta de conexão com o servidor do jogador.
-                        // $map    = @fsockopen($server['map']['address'], $server['map']['port']);
-                        // $char   = @fsockopen($server['char']['address'], $server['map']['port']);
-                        // $login  = @fsockopen($server['login']['address'], $server['map']['port']);
                         $map    = false;
                         $char   = false;
                         $login  = false;
+
+                        try { $map    = @fsockopen($server['map']['address'], $server['map']['port']); }
+                        catch(\Exception $ex) {  }
+
+                        try { $char   = @fsockopen($server['char']['address'], $server['map']['port']); }
+                        catch(\Exception $ex) {  }
+
+                        try { $login  = @fsockopen($server['login']['address'], $server['map']['port']); }
+                        catch(\Exception $ex) {  }
+
 
                         $tmp[] = [
                             'name'      => $server['name'],
